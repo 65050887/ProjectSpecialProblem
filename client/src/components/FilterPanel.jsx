@@ -43,6 +43,97 @@ export const DEFAULT_VALUE = {
   contractPeriod: "",
 };
 
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+/** ✅ custom select dropdown (รองรับ hover ได้ตามดีไซน์ที่ต้องการ) */
+function Dropdown({
+  value,
+  onChange,
+  placeholder,
+  options,
+  ORANGE = "#F16323",
+}) {
+  const [open, setOpen] = useState(false);
+
+  const currentLabel =
+    options.find((o) => o.value === value)?.label || "";
+
+  return (
+    <div className="relative">
+      {/* button */}
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className={cn(
+          "h-12 w-full rounded-full border-2 border-[#F16323] bg-white px-6 pr-12",
+          "text-left text-[16px] font-extrabold text-[#F16323] outline-none",
+          "hover:bg-[#F16323]/5 transition"
+        )}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {currentLabel || placeholder}
+        <ChevronDown
+          className={cn(
+            "pointer-events-none absolute right-5 top-1/2 h-6 w-6 -translate-y-1/2 text-[#F16323] transition",
+            open ? "rotate-180" : ""
+          )}
+        />
+      </button>
+
+      {/* list */}
+      {open && (
+        <div
+          className={cn(
+            "absolute left-0 right-0 z-30 mt-3 overflow-hidden rounded-[18px]",
+            "border-2 border-[#F16323] bg-white shadow-[0_18px_34px_rgba(0,0,0,0.18)]"
+          )}
+          role="listbox"
+        >
+          <div className="py-4 px-4 space-y-2">
+            {options.map((o) => {
+              const active = o.value === value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full rounded-xl px-6 py-4 text-left text-[20px] font-medium transition",
+                    // ✅ hover ชัดขึ้นตามที่ขอ
+                    "hover:bg-[#F16323]/15 hover:shadow-sm hover:-translate-y-[1px] active:translate-y-0",
+                    active ? "text-white" : "text-[#F16323] hover:text-[#D94E16]"
+                  )}
+                  style={{
+                    background: active ? ORANGE : "transparent",
+                  }}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* click outside */}
+      {open && (
+        <button
+          type="button"
+          className="fixed inset-0 z-20 cursor-default"
+          onClick={() => setOpen(false)}
+          aria-label="close dropdown"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function FilterPanel({
   value = DEFAULT_VALUE,
   onChange,
@@ -131,9 +222,13 @@ export default function FilterPanel({
       className="flex w-full items-center justify-between py-4 text-left"
       onClick={() => setOpen((s) => ({ ...s, [k]: !s[k] }))}
     >
+      {/* ✅ ปรับขนาด Filter Basic ได้ตรงนี้ */}
       <span className="text-[24px] font-extrabold text-[#F16323]">{title}</span>
       <ChevronDown
-        className={`h-7 w-7 text-[#F16323] transition ${open[k] ? "rotate-180" : ""}`}
+        className={cn(
+          "h-7 w-7 text-[#F16323] transition",
+          open[k] ? "rotate-180" : ""
+        )}
       />
     </button>
   );
@@ -142,28 +237,6 @@ export default function FilterPanel({
     <div className="mb-3 flex items-center gap-3 text-[#F16323]">
       <Icon className="h-7 w-7" />
       <div className="text-[18px] font-extrabold">{title}</div>
-    </div>
-  );
-
-  const SelectBox = ({ value, onChange, placeholder, options }) => (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={[
-          "h-12 w-full appearance-none rounded-full border-2 border-[#F16323] bg-white px-6 pr-12",
-          "text-[16px] font-extrabold text-[#F16323] outline-none",
-          "focus:ring-2 focus:ring-[#F16323]/30",
-        ].join(" ")}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-5 top-1/2 h-6 w-6 -translate-y-1/2 text-[#F16323]" />
     </div>
   );
 
@@ -213,295 +286,325 @@ export default function FilterPanel({
         >
           <span className="text-[18px] font-regular text-[#F16323]">Filters</span>
           <ChevronDown
-            className={`h-6 w-6 text-[#F16323] transition ${openPanel ? "rotate-180" : ""}`}
+            className={cn(
+              "h-6 w-6 text-[#F16323] transition",
+              openPanel ? "rotate-180" : ""
+            )}
           />
         </button>
       )}
 
-      {/* ✅ MAIN CARD (white background) */}
+      {/* ✅ SCROLL WRAPPER (เลื่อนได้ + ซ่อน scrollbar) */}
       <div
-        className={[
-          "rounded-[28px] border-2 p-8 bg-white",
-          "shadow-[0_18px_34px_rgba(0,0,0,0.18)]",
-          collapsible && !openPanel ? "hidden" : "",
-        ].join(" ")}
-        style={{ borderColor: ORANGE }}
+        className={cn(
+          "lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-2",
+          "scrollbar-hide"
+        )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-[#F16323]">
-            <SlidersHorizontal className="h-6 w-6" />
-            <div className="text-[18px] font-semibold">Filters</div>
+        {/* ✅ MAIN CARD (white background) */}
+        <div
+          className={[
+            "rounded-[28px] border-2 p-8 bg-white",
+            "shadow-[0_18px_34px_rgba(0,0,0,0.18)]",
+            collapsible && !openPanel ? "hidden" : "",
+          ].join(" ")}
+          style={{ borderColor: ORANGE }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-[#F16323]">
+              <SlidersHorizontal className="h-6 w-6" />
+              <div className="text-[18px] font-semibold">Filters</div>
+            </div>
+
+            <button
+              type="button"
+              onClick={clearLocal}
+              className="inline-flex items-center gap-3 text-[18px] font-extrabold text-[#F16323] hover:opacity-90"
+            >
+              <RotateCcw className="h-6 w-6" />
+              Clear
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={clearLocal}
-            className="inline-flex items-center gap-3 text-[18px] font-extrabold text-[#F16323] hover:opacity-90"
-          >
-            <RotateCcw className="h-6 w-6" />
-            Clear
-          </button>
-        </div>
+          {/* Sections */}
+          <div className="mt-6">
+            {/* Filter Basic */}
+            <div className="border-b border-[#F16323]/30 py-4">
+              <SectionRow title="Filter Basic" k="basic" />
+              {open.basic && (
+                <div className="pb-6 pt-3 space-y-7">
+                  {/* Price Range */}
+                  <div>
+                    <LabelRow icon={MapPin} title="Price Range" />
 
-        {/* Sections */}
-        <div className="mt-6">
-          {/* Filter Basic */}
-          <div className="border-b border-[#F16323]/30 py-4">
-            <SectionRow title="Filter Basic" k="basic" />
-            {open.basic && (
-              <div className="pb-6 pt-3 space-y-7">
-                {/* Price Range */}
-                <div>
-                  <LabelRow icon={MapPin} title="Price Range" />
+                    <div className="relative h-10">
+                      <div className="absolute left-0 top-1/2 h-3 w-full -translate-y-1/2 rounded-full bg-white border border-[#F16323]/30" />
+                      <div
+                        className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-[#F16323]"
+                        style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
+                      />
+                      <div
+                        className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
+                        style={{
+                          left: `calc(${minPct}% - 12px)`,
+                          background: YELLOW,
+                          boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
+                        }}
+                      />
+                      <div
+                        className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
+                        style={{
+                          left: `calc(${maxPct}% - 12px)`,
+                          background: YELLOW,
+                          boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
+                        }}
+                      />
 
-                  <div className="relative h-10">
-                    <div className="absolute left-0 top-1/2 h-3 w-full -translate-y-1/2 rounded-full bg-white border border-[#F16323]/30" />
-                    <div
-                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-[#F16323]"
-                      style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
-                    />
-                    <div
-                      className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
-                      style={{
-                        left: `calc(${minPct}% - 12px)`,
-                        background: YELLOW,
-                        boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
-                      }}
-                    />
-                    <div
-                      className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
-                      style={{
-                        left: `calc(${maxPct}% - 12px)`,
-                        background: YELLOW,
-                        boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
-                      }}
-                    />
-                    <input
-                      type="range"
-                      min={PRICE_MIN}
-                      max={PRICE_MAX}
-                      step={PRICE_STEP}
-                      value={safeMin}
-                      onChange={(e) => setPriceMin(Number(e.target.value))}
-                      className="absolute left-0 top-0 h-10 w-full opacity-0"
-                    />
-                    <input
-                      type="range"
-                      min={PRICE_MIN}
-                      max={PRICE_MAX}
-                      step={PRICE_STEP}
-                      value={safeMax}
-                      onChange={(e) => setPriceMax(Number(e.target.value))}
-                      className="absolute left-0 top-0 h-10 w-full opacity-0"
+                      <input
+                        type="range"
+                        min={PRICE_MIN}
+                        max={PRICE_MAX}
+                        step={PRICE_STEP}
+                        value={safeMin}
+                        onChange={(e) => setPriceMin(Number(e.target.value))}
+                        className="absolute left-0 top-0 h-10 w-full opacity-0"
+                      />
+                      <input
+                        type="range"
+                        min={PRICE_MIN}
+                        max={PRICE_MAX}
+                        step={PRICE_STEP}
+                        value={safeMax}
+                        onChange={(e) => setPriceMax(Number(e.target.value))}
+                        className="absolute left-0 top-0 h-10 w-full opacity-0"
+                      />
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[#F16323]">
+                      <span className="text-[18px] font-extrabold">฿ {PRICE_MIN}</span>
+                      <span className="text-[18px] font-extrabold">฿ {PRICE_MAX}</span>
+                    </div>
+                  </div>
+
+                  {/* Distance */}
+                  <div>
+                    <LabelRow icon={MapPin} title="Distance from KMITL" />
+                    <Dropdown
+                      value={v.distance}
+                      onChange={(x) => setField("distance", x)}
+                      placeholder="Select Distance"
+                      options={[
+                        { value: "0.5", label: "Radius with in 500 m" },
+                        { value: "1", label: "Radius with in 1 km" },
+                        { value: "2", label: "Radius with in 2 km" },
+                        { value: "3", label: "Radius with in 3 km" },
+                        { value: "4", label: "Radius with in 4 km" },
+                        { value: "5", label: "Radius with in 5 km" },
+                        { value: "5+", label: "Radius with more than in 5 km" },
+                      ]}
+                      ORANGE={ORANGE}
                     />
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between text-[#F16323]">
-                    <span className="text-[18px] font-extrabold">฿ {PRICE_MIN}</span>
-                    <span className="text-[18px] font-extrabold">฿ {PRICE_MAX}</span>
-                  </div>
-                </div>
-
-                {/* Distance */}
-                <div>
-                  <LabelRow icon={MapPin} title="Distance from KMITL" />
-                  <SelectBox
-                    value={v.distance}
-                    onChange={(x) => setField("distance", x)}
-                    placeholder="Select Distance"
-                    options={[
-                      { value: "1", label: "≤ 1 km" },
-                      { value: "2", label: "≤ 2 km" },
-                      { value: "3", label: "≤ 3 km" },
-                      { value: "5", label: "≤ 5 km" },
-                    ]}
-                  />
-                </div>
-
-                {/* Room Type */}
-                <div>
-                  <LabelRow icon={Home} title="Room Type" />
-                  <SelectBox
-                    value={v.roomType}
-                    onChange={(x) => setField("roomType", x)}
-                    placeholder="Select Room Type"
-                    options={[
-                      { value: "fan", label: "Fan" },
-                      { value: "air", label: "Air" },
-                      { value: "both", label: "Fan & Air" },
-                    ]}
-                  />
-                </div>
-
-                {/* Rating */}
-                <div>
-                  <LabelRow icon={Star} title="Rating" />
-                  <div className="relative h-10">
-                    <div className="absolute left-0 top-1/2 h-3 w-full -translate-y-1/2 rounded-full bg-white border border-[#F16323]/30" />
-                    <div
-                      className="absolute left-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-[#F16323]"
-                      style={{ width: `${ratingPct}%` }}
-                    />
-                    <div
-                      className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
-                      style={{
-                        left: `calc(${ratingPct}% - 12px)`,
-                        background: YELLOW,
-                        boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
-                      }}
-                    />
-                    <input
-                      type="range"
-                      min={0}
-                      max={5}
-                      step={0.5}
-                      value={Math.max(0, Math.min(ratingMin, 5))}
-                      onChange={(e) => setField("ratingMin", Number(e.target.value))}
-                      className="absolute left-0 top-0 h-10 w-full opacity-0"
+                  {/* Room Type */}
+                  <div>
+                    <LabelRow icon={Home} title="Room Type" />
+                    <Dropdown
+                      value={v.roomType}
+                      onChange={(x) => setField("roomType", x)}
+                      placeholder="Select Room Type"
+                      options={[
+                        { value: "single", label: "Sigle Room" },
+                        { value: "twin", label: "Twin Room" },
+                      ]}
+                      ORANGE={ORANGE}
                     />
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between text-[#F16323]">
-                    <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
-                      <Star className="h-5 w-5" /> 0
-                    </span>
-                    <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
-                      <Star className="h-5 w-5" /> 2.5
-                    </span>
-                    <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
-                      <Star className="h-5 w-5" /> 5
-                    </span>
+                  {/* Rating */}
+                  <div>
+                    <LabelRow icon={Star} title="Rating" />
+                    <div className="relative h-10">
+                      <div className="absolute left-0 top-1/2 h-3 w-full -translate-y-1/2 rounded-full bg-white border border-[#F16323]/30" />
+                      <div
+                        className="absolute left-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-[#F16323]"
+                        style={{ width: `${ratingPct}%` }}
+                      />
+                      <div
+                        className="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full"
+                        style={{
+                          left: `calc(${ratingPct}% - 12px)`,
+                          background: YELLOW,
+                          boxShadow: "0 8px 14px rgba(0,0,0,0.22)",
+                        }}
+                      />
+                      <input
+                        type="range"
+                        min={0}
+                        max={5}
+                        step={0.5}
+                        value={Math.max(0, Math.min(ratingMin, 5))}
+                        onChange={(e) => setField("ratingMin", Number(e.target.value))}
+                        className="absolute left-0 top-0 h-10 w-full opacity-0"
+                      />
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[#F16323]">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                        <Star className="h-5 w-5" /> 0
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                        <Star className="h-5 w-5" /> 2.5
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                        <Star className="h-5 w-5" /> 5
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <LabelRow icon={ArrowUpDown} title="Sort by" />
+                    <Dropdown
+                      value={v.sortBy}
+                      onChange={(x) => setField("sortBy", x)}
+                      placeholder="Select Sort"
+                      options={[
+                        { value: "price_high", label: "Price : Maximum to Minimum" },
+                        { value: "price_low", label: "Price : Minimum to Maximum" },
+                        { value: "distance_far", label: "Distance : Far to Near" },
+                        { value: "distance_near", label: "Distance : Near to Far" },
+                        { value: "rating_good", label: "Rating : Good to Bad" },
+                        { value: "rating_bad", label: "Rating : Bad to Good" },
+                      ]}
+                      ORANGE={ORANGE}
+                    />
                   </div>
                 </div>
+              )}
+            </div>
 
-                {/* Sort */}
-                <div>
-                  <LabelRow icon={ArrowUpDown} title="Sort by" />
-                  <SelectBox
-                    value={v.sortBy}
-                    onChange={(x) => setField("sortBy", x)}
-                    placeholder="Select Sort"
-                    options={[
-                      { value: "nearest", label: "Nearest" },
-                      { value: "price_low", label: "Price: Low to High" },
-                      { value: "price_high", label: "Price: High to Low" },
-                      { value: "rating", label: "Highest Rating" },
-                    ]}
-                  />
+            {/* Facilities */}
+            <div className="border-b border-[#F16323]/30 py-4">
+              <SectionRow title="Facilities" k="facilities" />
+              {open.facilities && (
+                <div className="pb-6 pt-3">
+                  <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+                    {AMENITIES.map((a) => {
+                      const checked = (v.amenities || []).includes(a.key);
+                      const Icon = a.icon;
+                      return (
+                        <label
+                          key={a.key}
+                          className="flex cursor-pointer items-center gap-3 text-[#F16323]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAmenity(a.key)}
+                            className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-5 w-5" />
+                            <span className="text-[14px] font-extrabold">{a.label}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+
+                    <label className="col-span-2 mt-2 flex cursor-pointer items-center gap-3 text-[#F16323]">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setField("amenities", AMENITIES.map((x) => x.key));
+                          else setField("amenities", []);
+                        }}
+                        className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                      />
+                      <span className="text-[14px] font-extrabold">Select All</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Facilities */}
-          <div className="border-b border-[#F16323]/30 py-4">
-            <SectionRow title="Facilities" k="facilities" />
-            {open.facilities && (
-              <div className="pb-6 pt-3">
-                <div className="grid grid-cols-2 gap-x-10 gap-y-6">
-                  {AMENITIES.map((a) => {
-                    const checked = (v.amenities || []).includes(a.key);
-                    const Icon = a.icon;
-                    return (
-                      <label key={a.key} className="flex cursor-pointer items-center gap-3 text-[#F16323]">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleAmenity(a.key)}
-                          className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-5 w-5" />
-                          <span className="text-[14px] font-extrabold">{a.label}</span>
-                        </div>
-                      </label>
-                    );
-                  })}
+            {/* Special Need */}
+            <div className="border-b border-[#F16323]/30 py-4">
+              <SectionRow title="Special Need" k="special" />
+              {open.special && (
+                <div className="pb-6 pt-3 space-y-7">
+                  <div>
+                    <LabelRow icon={Users} title="Dormitory Type" />
+                    <Dropdown
+                      value={v.dormitoryType}
+                      onChange={(x) => setField("dormitoryType", x)}
+                      placeholder="Select Dormitory Type"
+                      options={[
+                        { value: "male", label: "Male" },
+                        { value: "female", label: "Female" },
+                        { value: "mix", label: "Mix" },
+                      ]}
+                      ORANGE={ORANGE}
+                    />
+                  </div>
 
-                  <label className="col-span-2 mt-2 flex cursor-pointer items-center gap-3 text-[#F16323]">
+                  <label className="flex cursor-pointer items-center gap-4 text-[#F16323]">
+                    <PawPrint className="h-7 w-7" />
+                    <span className="text-[18px] font-extrabold">Pet Friendly</span>
                     <input
                       type="checkbox"
-                      checked={allSelected}
-                      onChange={(e) => {
-                        if (e.target.checked) setField("amenities", AMENITIES.map((x) => x.key));
-                        else setField("amenities", []);
-                      }}
-                      className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                      checked={!!v.petFriendly}
+                      onChange={(e) => setField("petFriendly", e.target.checked)}
+                      className="ml-auto h-7 w-7 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
                     />
-                    <span className="text-[14px] font-extrabold">Select All</span>
                   </label>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Special Need */}
-          <div className="border-b border-[#F16323]/30 py-4">
-            <SectionRow title="Special Need" k="special" />
-            {open.special && (
-              <div className="pb-6 pt-3 space-y-7">
-                <div>
-                  <LabelRow icon={Users} title="Dormitory Type" />
-                  <SelectBox
-                    value={v.dormitoryType}
-                    onChange={(x) => setField("dormitoryType", x)}
-                    placeholder="Select Dormitory Type"
+            {/* Filter Advanced */}
+            <div className="py-4">
+              <SectionRow title="Filter Advanced" k="advanced" />
+              {open.advanced && (
+                <div className="pb-2 pt-3">
+                  <LabelRow icon={MapPin} title="Contract period" />
+                  <Dropdown
+                    value={v.contractPeriod}
+                    onChange={(x) => setField("contractPeriod", x)}
+                    placeholder="Select Contract Period"
                     options={[
-                      { value: "male", label: "Male" },
-                      { value: "female", label: "Female" },
-                      { value: "mix", label: "Mix" },
+                      { value: "3m", label: "3 months" },
+                      { value: "6m", label: "6 months" },
+                      { value: "1y", label: "1 year" },
                     ]}
+                    ORANGE={ORANGE}
                   />
                 </div>
-
-                <label className="flex cursor-pointer items-center gap-4 text-[#F16323]">
-                  <PawPrint className="h-7 w-7" />
-                  <span className="text-[18px] font-extrabold">Pet Friendly</span>
-                  <input
-                    type="checkbox"
-                    checked={!!v.petFriendly}
-                    onChange={(e) => setField("petFriendly", e.target.checked)}
-                    className="ml-auto h-7 w-7 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
-                  />
-                </label>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Filter Advanced */}
-          <div className="py-4">
-            <SectionRow title="Filter Advanced" k="advanced" />
-            {open.advanced && (
-              <div className="pb-2 pt-3">
-                <LabelRow icon={MapPin} title="Contract period" />
-                <SelectBox
-                  value={v.contractPeriod}
-                  onChange={(x) => setField("contractPeriod", x)}
-                  placeholder="Select Contract Period"
-                  options={[
-                    { value: "3m", label: "3 months" },
-                    { value: "6m", label: "6 months" },
-                    { value: "1y", label: "1 year" },
-                  ]}
-                />
-              </div>
-            )}
+          {/* bottom button */}
+          <div className="pt-8">
+            <button
+              type="button"
+              onClick={clearLocal}
+              className="inline-flex h-16 w-full items-center justify-center gap-4 rounded-full bg-[#F16323] px-6 text-[18px] font-extrabold text-white hover:opacity-95"
+            >
+              <RotateCcw className="h-7 w-7" />
+              Clear all filter ({activeCount})
+            </button>
           </div>
-        </div>
-
-        {/* bottom button */}
-        <div className="pt-8">
-          <button
-            type="button"
-            onClick={clearLocal}
-            className="inline-flex h-16 w-full items-center justify-center gap-4 rounded-full bg-[#F16323] px-6 text-[18px] font-extrabold text-white hover:opacity-95"
-          >
-            <RotateCcw className="h-7 w-7" />
-            Clear all filter ({activeCount})
-          </button>
         </div>
       </div>
+
+      {/* ✅ ซ่อน scrollbar แต่ยัง scroll ได้ */}
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }

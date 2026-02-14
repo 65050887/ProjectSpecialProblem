@@ -635,7 +635,7 @@ export default function Search() {
               className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-[#F16323] px-10 text-[18px] font-medium text-[#F16323] hover:bg-[#F16323]/10 md:w-auto"
             >
               <SlidersHorizontal className="h-6 w-6" />
-              {filtersOpen ? "Filters" : "Filters"}
+              {filtersOpen ? " Filters" : "Filters"}
             </button>
           </div>
 
