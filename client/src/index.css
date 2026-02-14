@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* --- LINE Seed Sans EN --- */
+@font-face {
+  font-family: "LINE Seed Sans EN";
+  src: url("/fonts/en/WOFF2/LINESeedSans_W_Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans EN";
+  src: url("/fonts/en/WOFF2/LINESeedSans_W_Th.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans EN";
+  src: url("/fonts/en/WOFF2/LINESeedSans_W_Bd.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans EN";
+  src: url("/fonts/en/WOFF2/LINESeedSans_W_XBd.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans EN";
+  src: url("/fonts/en/WOFF2/LINESeedSans_W_He.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* --- LINE Seed Sans TH --- */
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/th/WOFF2/LINESeedSansTH_W_Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/th/WOFF2/LINESeedSansTH_W_Th.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/th/WOFF2/LINESeedSansTH_W_Bd.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/th/WOFF2/LINESeedSansTH_W_XBd.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/th/WOFF2/LINESeedSansTH_W_He.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+@layer base {
+  html {
+    font-family: "LINE Seed Sans TH", "LINE Seed Sans EN", system-ui, sans-serif;
+  }
+}

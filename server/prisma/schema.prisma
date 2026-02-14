@@ -1,0 +1,273 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// ถ้ามีการแก้ไข schema.prisma ต้องรันคำสั่ง npx prisma migrate dev --name ตามด้วยชื่อที่อัปเดท updatecategoryId เพื่อสร้าง client ใหม่ทุกครั้ง จะไปอัปเดทที่ไฟล์ prisma/migrations และ generated/prisma
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  // Connection URLs are no longer supported in schema.prisma.
+  // Move connection URLs for Migrate to prisma.config.ts and pass
+  // either `adapter` for a direct database connection or `accelerateUrl`
+  // for Accelerate to the PrismaClient constructor.
+}
+
+
+model users {
+  user_id       BigInt   @id @default(autoincrement())
+  username      String   @db.VarChar(50)
+  email         String   @unique @db.VarChar(255)
+  password_hash String   @db.VarChar(255)
+
+  // optional user preferences
+  preferred_language String? @db.VarChar(5)  // th|en
+  theme              String? @db.VarChar(10) // light|dark
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  reviews        Reviews[]
+  replies        Reviews_replies[]
+  review_likes   Reviews_Likes[]
+  favorites      Favorites[]
+}
+
+model Dorms {
+  dorm_id BigInt @id @default(autoincrement())
+  dorm_code String? @unique @db.VarChar(30)
+
+  // original fields (keep for fallback)
+  dorm_name   String? @db.VarChar(255)
+  description String? @db.Text
+  address     String? @db.Text
+  district    String? @db.VarChar(100)
+  province    String? @db.VarChar(100)
+
+  // ✅ coords (map from sheet dorm_lat/dorm_lng)
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+
+  // bilingual fields (recommended)
+  dorm_name_th   String? @db.VarChar(255)
+  dorm_name_en   String? @db.VarChar(255)
+  description_th String? @db.Text
+  description_en String? @db.Text
+  address_th     String? @db.Text
+  address_en     String? @db.Text
+  district_th    String? @db.VarChar(100)
+  district_en    String? @db.VarChar(100)
+  province_th    String? @db.VarChar(100)
+  province_en    String? @db.VarChar(100)
+
+  zone_th        String? @db.VarChar(100)
+  subzone_th     String? @db.VarChar(100)
+  distance_m     Int?    @db.Int
+  price_min      Int?    @db.Int
+  price_max      Int?    @db.Int
+  total_rooms    Int?    @db.Int
+  available_rooms Int?   @db.Int
+
+  verified_status Boolean? @default(false)
+  avg_rating     Decimal? @db.Decimal(3,2)
+  review_count   Int? @db.Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  contacts       Dorm_Contacts[]
+  images         Dorm_Images[]
+  room_types     Room_types[]
+  fees           Dorms_Fees?
+  policies       Dorm_Policies?
+  dormAmenities  Dorms_Amenities[]
+  reviews        Reviews[]
+  favorites      Favorites[]
+
+  @@index([price_min])
+  @@index([price_max])
+  @@index([distance_m])
+  @@index([verified_status])
+}
+
+
+model Dorm_Contacts {
+  contact_id BigInt @id @default(autoincrement())
+  dorm_id    BigInt
+
+  phone        String? @db.VarChar(30)
+  line_id      String? @db.VarChar(50)
+  email        String? @db.VarChar(255)
+  facebook_url String? @db.VarChar(255)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+
+  @@index([dorm_id])
+}
+
+model Dorm_Images {
+  image_id   BigInt @id @default(autoincrement())
+  dorm_id    BigInt
+  image_url  String @db.VarChar(500)
+  sort_order Int    @default(0)
+  created_at DateTime @default(now())
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+
+  @@index([dorm_id])
+}
+
+model Amenities {
+  amenities_id BigInt @id @default(autoincrement())
+
+  // original
+  amenity_name String? @db.VarChar(120)
+
+  // bilingual
+  amenity_name_th String? @unique @db.VarChar(120)
+  amenity_name_en String? @unique @db.VarChar(120)
+
+  dormAmenities Dorms_Amenities[]
+
+  @@index([amenity_name_th])
+  @@index([amenity_name_en])
+}
+
+model Dorms_Amenities {
+  dorm_id      BigInt
+  amenities_id BigInt
+  created_at   DateTime @default(now())
+
+  dorm    Dorms     @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+  amenity Amenities @relation(fields: [amenities_id], references: [amenities_id], onDelete: Restrict)
+
+  @@id([dorm_id, amenities_id])
+  @@index([amenities_id])
+}
+
+model Room_types {
+  room_type_id BigInt @id @default(autoincrement())
+  dorm_id      BigInt
+
+  // original
+  room_type_name String? @db.VarChar(120)
+
+  // bilingual
+  room_type_name_th String? @db.VarChar(120)
+  room_type_name_en String? @db.VarChar(120)
+
+  price_per_month Int @default(0)
+  available_rooms Int @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+
+  @@index([dorm_id])
+}
+
+model Dorms_Fees {
+  dorm_id BigInt @id
+
+  water_rate              Decimal? @db.Decimal(10, 2)
+  electric_rate           Decimal? @db.Decimal(10, 2)
+  advance_rent_months     Int?     @db.UnsignedTinyInt
+  security_deposit_months Int?     @db.UnsignedTinyInt
+
+  updated_at DateTime @updatedAt
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+}
+
+model Dorm_Policies {
+  dorm_id BigInt @id
+
+  pet_allowed     Boolean?
+  smoking_allowed Boolean?
+  gender_policy   String? @db.VarChar(50)
+
+  // bilingual note
+  policy_note_th String? @db.Text
+  policy_note_en String? @db.Text
+
+  updated_at DateTime @updatedAt
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+}
+
+model Reviews {
+  review_id BigInt @id @default(autoincrement())
+  dorm_id   BigInt
+  user_id   BigInt
+
+  rating  Int    @db.UnsignedTinyInt
+  comment String? @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+  user users @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  replies Reviews_replies[]
+  likes   Reviews_Likes[]
+
+  @@index([dorm_id])
+  @@index([user_id])
+}
+
+model Reviews_replies {
+  reply_id  BigInt @id @default(autoincrement())
+  review_id BigInt
+  user_id   BigInt
+
+  reply_text String @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  review Reviews @relation(fields: [review_id], references: [review_id], onDelete: Cascade)
+  user   users   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([review_id])
+  @@index([user_id])
+}
+
+model Reviews_Likes {
+  like_id   BigInt @id @default(autoincrement())
+  review_id BigInt
+  user_id   BigInt
+  created_at DateTime @default(now())
+
+  review Reviews @relation(fields: [review_id], references: [review_id], onDelete: Cascade)
+  user   users   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([review_id, user_id])
+  @@index([user_id])
+}
+
+model Favorites {
+  favorite_id BigInt @id @default(autoincrement())
+  user_id     BigInt
+  dorm_id     BigInt
+  created_at  DateTime @default(now())
+
+  user users @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  dorm Dorms @relation(fields: [dorm_id], references: [dorm_id], onDelete: Cascade)
+
+  @@unique([user_id, dorm_id])
+  @@index([dorm_id])
+}
