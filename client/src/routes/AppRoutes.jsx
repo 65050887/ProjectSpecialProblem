@@ -1,3 +1,4 @@
+// client\src\routes\AppRoutes.jsx
 import React from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Home from '../pages/Home'
@@ -20,6 +21,7 @@ import ProtectRouteUser from './ProtectRouteUser'
 import ProtectRouteAdmin from './ProtectRouteAdmin'
 // import LoginRoute from '../pages/auth/LoginRoute'
 import DormDetail from "../pages/DormDetail";
+import Compare from '../pages/Compare'
 
 const router = createBrowserRouter([
     { 
@@ -31,6 +33,7 @@ const router = createBrowserRouter([
             { index: true, element:<Home />},
             { path: 'search', element:<Search />},
             { path: 'dorm/:dormId', element:<DormDetail />},
+            { path: 'compare', element:<Compare />},
             { path: 'cart', element:<Cart />},
             { path: 'history', element:<History />},
             { path: 'checkout', element:<Checkout />},

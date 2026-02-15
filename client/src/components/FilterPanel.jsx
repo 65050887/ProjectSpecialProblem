@@ -48,27 +48,19 @@ function cn(...classes) {
 }
 
 /** ✅ custom select dropdown (รองรับ hover ได้ตามดีไซน์ที่ต้องการ) */
-function Dropdown({
-  value,
-  onChange,
-  placeholder,
-  options,
-  ORANGE = "#F16323",
-}) {
+function Dropdown({ value, onChange, placeholder, options, ORANGE = "#F16323" }) {
   const [open, setOpen] = useState(false);
 
-  const currentLabel =
-    options.find((o) => o.value === value)?.label || "";
+  const currentLabel = options.find((o) => o.value === value)?.label || "";
 
   return (
     <div className="relative">
-      {/* button */}
       <button
         type="button"
         onClick={() => setOpen((s) => !s)}
         className={cn(
           "h-12 w-full rounded-full border-2 border-[#F16323] bg-white px-6 pr-12",
-          "text-left text-[16px] font-extrabold text-[#F16323] outline-none",
+          "text-left text-[16px] font-bold text-[#F16323] outline-none",
           "hover:bg-[#F16323]/5 transition"
         )}
         aria-haspopup="listbox"
@@ -83,7 +75,6 @@ function Dropdown({
         />
       </button>
 
-      {/* list */}
       {open && (
         <div
           className={cn(
@@ -104,14 +95,11 @@ function Dropdown({
                     setOpen(false);
                   }}
                   className={cn(
-                    "w-full rounded-xl px-6 py-4 text-left text-[20px] font-medium transition",
-                    // ✅ hover ชัดขึ้นตามที่ขอ
+                    "w-full rounded-xl px-6 py-4 text-left text-[16px] font-medium transition",
                     "hover:bg-[#F16323]/15 hover:shadow-sm hover:-translate-y-[1px] active:translate-y-0",
                     active ? "text-white" : "text-[#F16323] hover:text-[#D94E16]"
                   )}
-                  style={{
-                    background: active ? ORANGE : "transparent",
-                  }}
+                  style={{ background: active ? ORANGE : "transparent" }}
                 >
                   {o.label}
                 </button>
@@ -121,7 +109,6 @@ function Dropdown({
         </div>
       )}
 
-      {/* click outside */}
       {open && (
         <button
           type="button"
@@ -213,8 +200,7 @@ export default function FilterPanel({
     setField("amenities", next);
   };
 
-  const allSelected =
-    Array.isArray(v.amenities) && v.amenities.length === AMENITIES.length;
+  const allSelected = Array.isArray(v.amenities) && v.amenities.length === AMENITIES.length;
 
   const SectionRow = ({ title, k }) => (
     <button
@@ -222,38 +208,28 @@ export default function FilterPanel({
       className="flex w-full items-center justify-between py-4 text-left"
       onClick={() => setOpen((s) => ({ ...s, [k]: !s[k] }))}
     >
-      {/* ✅ ปรับขนาด Filter Basic ได้ตรงนี้ */}
-      <span className="text-[24px] font-extrabold text-[#F16323]">{title}</span>
-      <ChevronDown
-        className={cn(
-          "h-7 w-7 text-[#F16323] transition",
-          open[k] ? "rotate-180" : ""
-        )}
-      />
+      <span className="text-[18px] font-bold text-[#F16323]">{title}</span>
+      <ChevronDown className={cn("h-7 w-7 text-[#F16323] transition", open[k] ? "rotate-180" : "")} />
     </button>
   );
 
   const LabelRow = ({ icon: Icon, title }) => (
     <div className="mb-3 flex items-center gap-3 text-[#F16323]">
       <Icon className="h-7 w-7" />
-      <div className="text-[18px] font-extrabold">{title}</div>
+      <div className="text-[16px] font-bold">{title}</div>
     </div>
   );
 
   // Price slider
-  const PRICE_MIN = 500;
-  const PRICE_MAX = 2000;
-  const PRICE_STEP = 50;
+  const PRICE_MIN = 2000;
+  const PRICE_MAX = 10000;
+  const PRICE_STEP = 500;
 
   const priceMinNum = Number(String(v.priceMin || "").trim() || PRICE_MIN);
   const priceMaxNum = Number(String(v.priceMax || "").trim() || PRICE_MAX);
 
-  const minVal = Number.isFinite(priceMinNum)
-    ? Math.max(PRICE_MIN, Math.min(priceMinNum, PRICE_MAX))
-    : PRICE_MIN;
-  const maxVal = Number.isFinite(priceMaxNum)
-    ? Math.max(PRICE_MIN, Math.min(priceMaxNum, PRICE_MAX))
-    : PRICE_MAX;
+  const minVal = Number.isFinite(priceMinNum) ? Math.max(PRICE_MIN, Math.min(priceMinNum, PRICE_MAX)) : PRICE_MIN;
+  const maxVal = Number.isFinite(priceMaxNum) ? Math.max(PRICE_MIN, Math.min(priceMaxNum, PRICE_MAX)) : PRICE_MAX;
 
   const safeMin = Math.min(minVal, maxVal);
   const safeMax = Math.max(minVal, maxVal);
@@ -285,23 +261,11 @@ export default function FilterPanel({
           onClick={() => setOpenPanel((x) => !x)}
         >
           <span className="text-[18px] font-regular text-[#F16323]">Filters</span>
-          <ChevronDown
-            className={cn(
-              "h-6 w-6 text-[#F16323] transition",
-              openPanel ? "rotate-180" : ""
-            )}
-          />
+          <ChevronDown className={cn("h-6 w-6 text-[#F16323] transition", openPanel ? "rotate-180" : "")} />
         </button>
       )}
 
-      {/* ✅ SCROLL WRAPPER (เลื่อนได้ + ซ่อน scrollbar) */}
-      <div
-        className={cn(
-          "lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-2",
-          "scrollbar-hide"
-        )}
-      >
-        {/* ✅ MAIN CARD (white background) */}
+      <div className={cn("lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-2", "scrollbar-hide")}>
         <div
           className={[
             "rounded-[28px] border-2 p-8 bg-white",
@@ -320,7 +284,7 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={clearLocal}
-              className="inline-flex items-center gap-3 text-[18px] font-extrabold text-[#F16323] hover:opacity-90"
+              className="inline-flex items-center gap-3 text-[18px] font-bold text-[#F16323] hover:opacity-90"
             >
               <RotateCcw className="h-6 w-6" />
               Clear
@@ -382,8 +346,8 @@ export default function FilterPanel({
                     </div>
 
                     <div className="mt-2 flex items-center justify-between text-[#F16323]">
-                      <span className="text-[18px] font-extrabold">฿ {PRICE_MIN}</span>
-                      <span className="text-[18px] font-extrabold">฿ {PRICE_MAX}</span>
+                      <span className="text-[16px] font-bold">฿ {PRICE_MIN}</span>
+                      <span className="text-[16px] font-bold">฿ {PRICE_MAX}</span>
                     </div>
                   </div>
 
@@ -451,13 +415,13 @@ export default function FilterPanel({
                     </div>
 
                     <div className="mt-2 flex items-center justify-between text-[#F16323]">
-                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-bold">
                         <Star className="h-5 w-5" /> 0
                       </span>
-                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-bold">
                         <Star className="h-5 w-5" /> 2.5
                       </span>
-                      <span className="inline-flex items-center gap-2 text-[18px] font-extrabold">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-bold">
                         <Star className="h-5 w-5" /> 5
                       </span>
                     </div>
@@ -495,24 +459,44 @@ export default function FilterPanel({
                       const checked = (v.amenities || []).includes(a.key);
                       const Icon = a.icon;
                       return (
-                        <label
-                          key={a.key}
-                          className="flex cursor-pointer items-center gap-3 text-[#F16323]"
-                        >
+                        <label key={a.key} className="flex cursor-pointer items-center gap-3 text-[#F16323]">
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleAmenity(a.key)}
-                            className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                            className="peer sr-only"
                           />
+
+                          {/* ✅ FIX: ให้ ✓ โผล่แน่ ๆ โดยคุมที่ span แล้วสั่งลูก svg */}
+                          <span
+                            className={cn(
+                              "flex h-6 w-6 items-center justify-center rounded-md border-2 border-[#F16323] bg-white transition",
+                              "peer-checked:bg-[#F16323]",
+                              "peer-checked:[&>svg]:opacity-100"
+                            )}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4 text-white opacity-0 transition"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                          </span>
+
                           <div className="flex items-center gap-2">
                             <Icon className="h-5 w-5" />
-                            <span className="text-[14px] font-extrabold">{a.label}</span>
+                            <span className="text-[16px] font-bold">{a.label}</span>
                           </div>
                         </label>
                       );
                     })}
 
+                    {/* Select All */}
                     <label className="col-span-2 mt-2 flex cursor-pointer items-center gap-3 text-[#F16323]">
                       <input
                         type="checkbox"
@@ -521,9 +505,30 @@ export default function FilterPanel({
                           if (e.target.checked) setField("amenities", AMENITIES.map((x) => x.key));
                           else setField("amenities", []);
                         }}
-                        className="h-6 w-6 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                        className="peer sr-only"
                       />
-                      <span className="text-[14px] font-extrabold">Select All</span>
+
+                      <span
+                        className={cn(
+                          "flex h-6 w-6 items-center justify-center rounded-md border-2 border-[#F16323] bg-white transition",
+                          "peer-checked:bg-[#F16323]",
+                          "peer-checked:[&>svg]:opacity-100"
+                        )}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4 text-white opacity-0 transition"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      </span>
+
+                      <span className="text-[14px] font-bold">Select All</span>
                     </label>
                   </div>
                 </div>
@@ -552,14 +557,38 @@ export default function FilterPanel({
 
                   <label className="flex cursor-pointer items-center gap-4 text-[#F16323]">
                     <PawPrint className="h-7 w-7" />
-                    <span className="text-[18px] font-extrabold">Pet Friendly</span>
+                    <span className="text-[16px] font-bold">Pet Friendly</span>
+
+                    {/* ✅ input จริง (ซ่อนไว้) */}
                     <input
                       type="checkbox"
                       checked={!!v.petFriendly}
                       onChange={(e) => setField("petFriendly", e.target.checked)}
-                      className="ml-auto h-7 w-7 appearance-none rounded-md border-2 border-[#F16323] bg-white checked:bg-[#F16323]"
+                      className="peer sr-only"
                     />
+
+                    {/* ✅ กล่อง checkbox แบบเดียวกับ Facilities */}
+                    <span
+                      className={cn(
+                        "ml-auto flex h-7 w-7 items-center justify-center rounded-md border-2 border-[#F16323] bg-white transition",
+                        "peer-checked:bg-[#F16323]",
+                        "peer-checked:[&>svg]:opacity-100"
+                      )}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 text-white opacity-0 transition"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </span>
                   </label>
+
                 </div>
               )}
             </div>
@@ -591,7 +620,7 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={clearLocal}
-              className="inline-flex h-16 w-full items-center justify-center gap-4 rounded-full bg-[#F16323] px-6 text-[18px] font-extrabold text-white hover:opacity-95"
+              className="inline-flex h-16 w-full items-center justify-center gap-4 rounded-full bg-[#F16323] px-6 text-[18px] font-semibold text-white hover:opacity-95"
             >
               <RotateCcw className="h-7 w-7" />
               Clear all filter ({activeCount})
@@ -600,7 +629,6 @@ export default function FilterPanel({
         </div>
       </div>
 
-      {/* ✅ ซ่อน scrollbar แต่ยัง scroll ได้ */}
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
