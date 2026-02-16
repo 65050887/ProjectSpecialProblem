@@ -1,3 +1,4 @@
+// server\routes\user.js
 const express = require('express')
 const router = express.Router()
 const {authCheck, adminCheck} = require('../middlewares/authCheck')
@@ -10,7 +11,9 @@ const {
     emptyCart,
     saveAddress,
     saveOrder,
-    getOrder 
+    getOrder,
+    updateProfilePicture,
+    updateProfile
 
 } = require('../controllers/user')
 
@@ -28,5 +31,8 @@ router.post('/user/address', authCheck,saveAddress)
 router.post('/user/order', authCheck,saveOrder)
 router.get('/user/order', authCheck,getOrder)
 
+// Profile picture and profile update routes
+router.post('/user/profile-picture', authCheck, updateProfilePicture)
+router.post('/user/profile', authCheck, updateProfile)
 
 module.exports = router

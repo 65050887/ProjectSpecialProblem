@@ -1,146 +1,92 @@
-const prisma = require('../config/prisma');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { token } = require('morgan');
+// server/controllers/auth.js
+const prisma = require("../config/prisma");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-// const register ใช้ภายในไฟล์ตัวเอง
-// exports.ตามด้วยชื่อฟังก์ชัน ให้ผู้อื่นเรียกใช้ได้ด้วย
-// async await คือการรอคำสั่งให้ทำงานเสร็จก่อน แล้วค่อยทำคำสั่งถัดไป
-exports.register = async(req,res) => {
-    // code ทุกอย่างจะยู๋ใน try...catch เผื่อ error
-    try{
-        // code
-        const {username, email, password} = req.body
-        
-        // Step1 validate body
-        if (!username) { 
-            return res.status(400).json({ 
-                message: "Username is required" 
-            });
-        }
+exports.register = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
 
-        // check email
-        if(!email){
-            return res.status(400).json({
-                message: "Email is required"
-            })
-        }
-        // check password
-        if(!password){
-            return res.status(400).json({
-                message: "Password is required"
-            })
-        }
+    if (!username) return res.status(400).json({ message: "Username is required" });
+    if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!password) return res.status(400).json({ message: "Password is required" });
 
-        // Step2 check email in DB already exists ?
-        const user = await prisma.users.findFirst({
-            where: {
-                email: email
-            }
-        })
+    const user = await prisma.users.findFirst({ where: { email } });
+    if (user) return res.status(400).json({ message: "Email already exists" });
 
-        if(user){
-            return res.status(400).json({
-                message: "Email already exists"
-            })
-        }
+    const hashPassword = await bcrypt.hash(password, 10);
 
-        // Step3 hash password
-        const hashPassword = await bcrypt.hash(password, 10)
-        
-        // console.log(user)
-        // console.log(hashPassword)
+    await prisma.users.create({
+      data: {
+        username,
+        email,
+        password_hash: hashPassword,
+      },
+    });
 
-        //Step4 Register user to DB
-        await prisma.users.create({
-            data: {
-                username: username,
-                email: email,
-                password_hash: hashPassword
-            }
-        })
-        
-        res.send('Register Success')
-    }catch(err){
-        console.log(err)
-        res.status(500).json({
-            message: "Server Error"
-        })
-    }
-}
+    return res.json({ message: "Register Success" });
+  } catch (err) {
+    console.log("REGISTER ERROR:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
 
-exports.login = async(req,res) => {
-    try{
-        const {email, password} = req.body
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-        // step 1 check email in DB
-        const user = await prisma.users.findFirst({
-            where: {
-                email: email
-            }
-        })
+    const user = await prisma.users.findFirst({ where: { email } });
+    if (!user) return res.status(400).json({ message: "Email not found" });
 
-        if(!user){
-            return res.status(400).json({
-                message: "Email not found"
-            })
-        }
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) return res.status(400).json({ message: "Password Invalid!!" });
 
-        // step 2 check password
-        const isMatch =  await bcrypt.compare(password, user.password_hash)
-        if(!isMatch){
-            return res.status(400).json({
-                message: "Password Ivalid!!"
-            })
-        }
-        
-        // step 3 create payload & token คือ obj ที่เราสร้างขึ้นมาเพื่อเก็บข้อมูลของ user
-        const payload = {
-            id: user.user_id.toString(),
-            email: user.email,
-            username: user.username
-            // role: user.role
-        }
+    const payload = {
+      id: user.user_id.toString(),
+      email: user.email,
+      username: user.username,
+    };
 
-        // step 4 generate token & send to user
-        jwt.sign(payload, process.env.SECRET, {expiresIn: '7d'}, (err, token) => {
-            if(err){
-                return res.status(500).json({
-                    message: "Server Error"
-                })
-            }
-            res.json({payload, token})
-        } )
+    jwt.sign(payload, process.env.SECRET, { expiresIn: "7d" }, (err, token) => {
+      if (err) {
+        console.log("JWT SIGN ERROR:", err);
+        return res.status(500).json({ message: "Server Error" });
+      }
+      return res.json({ payload, token });
+    });
+  } catch (err) {
+    console.log("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
 
-    }catch(err){
-        console.log("LOGIN ERROR:", err); 
-        // console.log(err)
-        res.status(500).json({
-            message: "Server Error"
-        })
-    }
-}
+exports.currentUser = async (req, res) => {
+  try {
+    // authCheck set req.user ไว้แล้ว
+    const email = req.user?.email;
+    if (!email) return res.status(401).json({ message: "Unauthorized" });
 
-exports.currentUser = async(req,res) => {
-    try{
-        const user = await prisma.users.findFirst({
-            where:{
-                email: req.user.email},
-                select: {
-                    id: true, 
-                    email: true,
-                    name: true,
-                    role: true,
-                }
-            }
-        )
-        res.json({user})
-    }catch{
-        console.log(err)
-        res.status(500).json({
-            message: "Server Error"
-        })
-    }
-}
+    const user = await prisma.users.findFirst({
+      where: { email },
+      select: {
+        user_id: true,
+        email: true,
+        username: true,
+        // ✅ ห้าม select role ถ้าใน schema ไม่มี
+      },
+    });
 
+    if (!user) return res.status(401).json({ message: "User not found" });
 
+    return res.json({
+      user: {
+        user_id: user.user_id?.toString(),
+        email: user.email,
+        username: user.username,
+      },
+    });
+  } catch (err) {
+    console.log("CURRENT USER ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

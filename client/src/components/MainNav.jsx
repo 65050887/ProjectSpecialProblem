@@ -91,7 +91,7 @@ const MainNav = () => {
           {/* login */}
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 rounded-[10px] bg-[#F16323] px-5 py-3 text-sm font-extrabold text-white hover:bg-[#d9551f]"
+            className="inline-flex items-center gap-2 rounded-[10px] bg-[#F16323] px-5 py-3 text-sm font-bold text-white hover:bg-[#d9551f]"
             onClick={() => setOpen(false)}
           >
             <User className="h-5 w-5" />

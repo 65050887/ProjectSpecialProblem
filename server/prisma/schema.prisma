@@ -31,6 +31,10 @@ model users {
   preferred_language String? @db.VarChar(5)  // th|en
   theme              String? @db.VarChar(10) // light|dark
 
+  picture   String? @db.LongText
+  phone     String? @db.VarChar(30)
+  fullname  String? @db.VarChar(120)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

@@ -1,14 +1,13 @@
-// client/src/pages/Compare.jsx
+// client/src/pages/user/CompareUser.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RotateCcw, X, BadgeCheck, MapPin, Star, Eye } from "lucide-react";
 
-const ORANGE = "#F16323";
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80";
 
-// ✅ ต้องให้ตรงกับ Search.jsx
-const COMPARE_KEY = "dc_compare_v1";
+// ✅ ต้องให้ตรงกับ SearchUser.jsx
+const COMPARE_KEY = "dc_compare_user_v1";
 const MAX_COMPARE = 4;
 
 function cn(...classes) {
@@ -52,16 +51,11 @@ function readCompare() {
 }
 function writeCompare(list) {
   try {
-    localStorage.setItem(
-      COMPARE_KEY,
-      JSON.stringify((list || []).slice(0, MAX_COMPARE))
-    );
-  } catch {
-    // ignore
-  }
+    localStorage.setItem(COMPARE_KEY, JSON.stringify((list || []).slice(0, MAX_COMPARE)));
+  } catch {}
 }
 
-/** ---- safe getters (อ่านจาก raw รายละเอียดได้หลายชื่อ field) ---- */
+/** ---- safe getters ---- */
 function pickDormDetailJson(json) {
   if (!json) return null;
   return (
@@ -88,12 +82,8 @@ function uniqStrings(arr) {
 function getFacilitiesArray(item) {
   const d = item?.detail ?? item?.raw ?? item ?? {};
 
-  // 1) amenities เป็น array of string
-  if (Array.isArray(d?.amenities) && d.amenities.length) {
-    return uniqStrings(d.amenities);
-  }
+  if (Array.isArray(d?.amenities) && d.amenities.length) return uniqStrings(d.amenities);
 
-  // 2) ✅ ของจริงจาก backend: dormAmenities: [{ amenity: { amenity_name_th/en } }]
   if (Array.isArray(d?.dormAmenities) && d.dormAmenities.length) {
     const names = d.dormAmenities.map(
       (x) =>
@@ -107,28 +97,6 @@ function getFacilitiesArray(item) {
     return uniqStrings(names);
   }
 
-  // 3) dorm_amenities (เผื่ออนาคต)
-  const da =
-    d?.dorm_amenities ||
-    d?.Dorm_Amenities ||
-    d?.dormAmenities ||
-    d?.amenity_map ||
-    d?.amenities_map ||
-    null;
-
-  if (Array.isArray(da) && da.length) {
-    const names = da.map(
-      (x) =>
-        x?.amenity_name_th ||
-        x?.amenity_name_en ||
-        x?.name ||
-        x?.amenity_key ||
-        x?.key
-    );
-    return uniqStrings(names);
-  }
-
-  // 4) amenities_text เป็น string
   const text = d?.amenities_text || d?.facilities_text || d?.facility_text || "";
   if (text) {
     const parts = String(text)
@@ -143,60 +111,23 @@ function getFacilitiesArray(item) {
 
 function getElectric(item) {
   const d = item?.detail ?? item?.raw ?? item ?? {};
-  const v =
-    d?.electric_rate ??
-    d?.electric ??
-    d?.electricRate ??
-    d?.electric_price ??
-    d?.fees?.electric_rate ??
-    d?.fees?.electric ??
-    null;
-
-  const type =
-    d?.electric_rate_type ??
-    d?.electricType ??
-    d?.electric_rate_unit ??
-    d?.fees?.electric_rate_type ??
-    d?.fees?.electricType ??
-    "";
-
+  const v = d?.electric_rate ?? d?.electric ?? d?.electricRate ?? d?.fees?.electric_rate ?? null;
+  const type = d?.electric_rate_type ?? d?.electricType ?? d?.fees?.electric_rate_type ?? "";
   if (v == null || v === "") return "-";
   return `${v} THB ${type ? `/ ${type}` : "/ Unit"}`;
 }
 
 function getWater(item) {
   const d = item?.detail ?? item?.raw ?? item ?? {};
-  const v =
-    d?.water_rate ??
-    d?.water ??
-    d?.waterRate ??
-    d?.water_price ??
-    d?.fees?.water_rate ??
-    d?.fees?.water ??
-    null;
-
-  const type =
-    d?.water_rate_type ??
-    d?.waterType ??
-    d?.water_rate_unit ??
-    d?.fees?.water_rate_type ??
-    d?.fees?.waterType ??
-    "";
-
+  const v = d?.water_rate ?? d?.water ?? d?.waterRate ?? d?.fees?.water_rate ?? null;
+  const type = d?.water_rate_type ?? d?.waterType ?? d?.fees?.water_rate_type ?? "";
   if (v == null || v === "") return "-";
   return `${v} THB ${type ? `/ ${type}` : "/ Unit"}`;
 }
 
 function getInternet(item) {
   const d = item?.detail ?? item?.raw ?? item ?? {};
-  const v =
-    d?.internet ??
-    d?.internet_fee ??
-    d?.internetFee ??
-    d?.wifi_fee ??
-    d?.wifiFee ??
-    null;
-
+  const v = d?.internet ?? d?.internet_fee ?? d?.internetFee ?? d?.wifi_fee ?? d?.wifiFee ?? null;
   if (v == null || v === "") return "—";
   const n = Number(v);
   if (Number.isFinite(n) && n === 0) return "Free";
@@ -206,7 +137,6 @@ function getInternet(item) {
 
 function getDormType(item) {
   const d = item?.detail ?? item?.raw ?? item ?? {};
-
   const gp =
     d?.gender_policy ??
     d?.gender_policy_th ??
@@ -219,12 +149,10 @@ function getDormType(item) {
   const s = String(gp || "").trim().toLowerCase();
   if (!s) return "-";
 
-  // ไทย
   if (s.includes("หญิง")) return "Only Female";
   if (s.includes("ชาย")) return "Only Male";
   if (s.includes("รวม") || s.includes("ผสม")) return "Mixed Dormitory";
 
-  // อังกฤษ
   if (s.includes("female") || s.includes("women")) return "Only Female";
   if (s.includes("male") || s.includes("men")) return "Only Male";
   if (s.includes("mix") || s.includes("co")) return "Mixed Dormitory";
@@ -256,7 +184,7 @@ function getMaxPrice(item) {
   return Number.isFinite(n) ? n : null;
 }
 
-export default function Compare() {
+export default function CompareUser() {
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -273,6 +201,7 @@ export default function Compare() {
 
   useEffect(() => {
     const controller = new AbortController();
+
     const run = async () => {
       try {
         const ids = (items || []).map((x) => String(x?.id)).filter(Boolean);
@@ -329,16 +258,11 @@ export default function Compare() {
     setItems(next);
   };
 
-  // ✅ responsive layout (รองรับ 4 หอ)
   const layout = useMemo(() => {
     const leftCol = count >= 4 ? 180 : 220;
     const dormMin = count >= 4 ? 240 : 260;
     const minWidth = leftCol + dormMin * count;
-
     return {
-      leftCol,
-      dormMin,
-      minWidth,
       gridStyle: {
         gridTemplateColumns: `${leftCol}px repeat(${count}, minmax(${dormMin}px, 1fr))`,
         minWidth,
@@ -346,7 +270,7 @@ export default function Compare() {
     };
   }, [count]);
 
-  const gridStyle = layout.gridStyle; // ✅ สำคัญ: กัน gridStyle not defined
+  const gridStyle = layout.gridStyle;
 
   const rows = useMemo(
     () => [
@@ -459,7 +383,7 @@ export default function Compare() {
 
             <button
               type="button"
-              onClick={() => navigate("/search")}
+              onClick={() => navigate("/user/search")}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5"
               aria-label="close"
               title="Back"
@@ -472,14 +396,16 @@ export default function Compare() {
           {count === 0 ? (
             <div className="px-6 pb-10">
               <div className="rounded-2xl border border-[#F16323]/25 bg-[#F16323]/5 p-10 text-center">
-                <div className="text-[18px] font-extrabold text-[#F16323]">ยังไม่มีหอที่เลือกมาเปรียบเทียบ</div>
+                <div className="text-[18px] font-extrabold text-[#F16323]">
+                  ยังไม่มีหอที่เลือกมาเปรียบเทียบ
+                </div>
                 <div className="mt-2 text-[14px] text-black/50">
-                  ไปที่หน้า Search แล้วกดปุ่ม Compare ที่การ์ดหอพักก่อนนะ
+                  ไปที่หน้า SearchUser แล้วกดปุ่ม Compare ที่การ์ดหอพักก่อนนะ
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => navigate("/search")}
+                  onClick={() => navigate("/user/search")}
                   className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#F16323] px-8 text-[14px] font-extrabold text-white hover:opacity-95"
                 >
                   Go to Search
@@ -488,20 +414,13 @@ export default function Compare() {
             </div>
           ) : (
             <>
-              {/* ✅ Horizontal scroll wrapper */}
               <div className="overflow-x-auto">
                 {/* TOP CARDS ROW */}
                 <div className="grid gap-0 border-t border-[#F16323]/20" style={gridStyle}>
                   <div className="bg-[#F4F4F4]" />
 
                   {viewItems.map((d) => (
-                    <div
-                      key={d.id}
-                      className={cn(
-                        "relative bg-white py-8",
-                        count >= 4 ? "px-3" : "px-6"
-                      )}
-                    >
+                    <div key={d.id} className={cn("relative bg-white py-8", count >= 4 ? "px-3" : "px-6")}>
                       <button
                         type="button"
                         onClick={() => removeOne(d.id)}

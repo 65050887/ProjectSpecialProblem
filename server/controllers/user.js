@@ -1,3 +1,4 @@
+// server\controllers\user.js
 const prisma = require("../config/prisma")
 const { create } = require("./product")
 
@@ -356,3 +357,69 @@ exports.getOrder = async(req, res) => {
         })
     }
 } 
+
+// POST /api/user/profile-picture
+exports.updateProfilePicture = async (req, res) => {
+  try {
+    const { pictureUrl } = req.body;
+
+    if (!pictureUrl) {
+      return res.status(400).json({ ok: false, message: "Picture URL is required" });
+    }
+
+    const userId = BigInt(req.user.user_id);
+
+    const updatedUser = await prisma.users.update({
+      where: { user_id: userId },
+      data: { picture: pictureUrl },
+      select: { user_id: true, picture: true },
+    });
+
+    return res.json({
+      ok: true,
+      message: "Profile picture updated successfully",
+      picture: updatedUser.picture,
+    });
+  } catch (err) {
+    console.log("updateProfilePicture error:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
+
+// Update user profile (name, email, phone, etc.)
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.username = name; // ใน schema มี username
+    if (email !== undefined) updateData.email = email;
+    // ใน schema ของเธอ "ยังไม่มี phone" → ถ้าอยากเก็บจริง ต้องเพิ่ม field ใน schema + migrate
+    // ถ้ายังไม่เพิ่ม ให้คอมเมนต์ไว้ก่อนเพื่อไม่ให้ Prisma error
+    // if (phone !== undefined) updateData.phone = phone;
+
+    const userId = BigInt(req.user.user_id);
+
+    const updatedUser = await prisma.users.update({
+      where: { user_id: userId },
+      data: updateData,
+      select: { user_id: true, username: true, email: true, picture: true },
+    });
+
+    return res.json({
+      ok: true,
+      message: "Profile updated successfully",
+      user: {
+        user_id: updatedUser.user_id.toString(),
+        username: updatedUser.username,
+        email: updatedUser.email,
+        picture: updatedUser.picture,
+      },
+    });
+  } catch (err) {
+    console.log("updateProfile error:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};

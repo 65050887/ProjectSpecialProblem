@@ -1,6 +1,6 @@
 // client/src/pages/DormDetail.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams} from "react-router-dom";
 import {
   X,
   Home as HomeIcon,
@@ -30,15 +30,8 @@ function formatMoney(n) {
 }
 
 function toArrayImages(d) {
-  const imgs =
-    d?.images ||
-    d?.dorm_images ||
-    d?.Dorm_Images ||
-    d?.dorm_Images ||
-    [];
-  const list = Array.isArray(imgs)
-    ? imgs.map((x) => x?.image_url || x?.url || x).filter(Boolean)
-    : [];
+  const imgs = d?.images || d?.dorm_images || d?.Dorm_Images || d?.dorm_Images || [];
+  const list = Array.isArray(imgs) ? imgs.map((x) => x?.image_url || x?.url || x).filter(Boolean) : [];
 
   if (list.length) return list;
   if (d?.cover_image_url) return [d.cover_image_url];
@@ -113,6 +106,76 @@ function toDriveImageUrl(url = "") {
     return `https://drive.google.com/thumbnail?id=${m3[1]}&sz=w1200`;
   }
   return s;
+}
+
+/** ✅ helpers: ดึงค่าจากหลาย field / หลาย object */
+function pickAny(obj, paths = []) {
+  for (const p of paths) {
+    const parts = String(p).split(".");
+    let cur = obj;
+    for (const k of parts) cur = cur?.[k];
+    if (cur !== undefined && cur !== null && cur !== "") return cur;
+  }
+  return null;
+}
+
+function toNumberOrNull(v) {
+  if (v === undefined || v === null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function monthText(v) {
+  const n = toNumberOrNull(v);
+  if (n === null) return v !== undefined && v !== null && v !== "" ? String(v) : "-";
+  return `${n} Month`;
+}
+
+function rateText(v) {
+  if (v === undefined || v === null || v === "") return "-";
+  const n = Number(v);
+  if (Number.isFinite(n)) return `${n} Baht/Unit`;
+  return `${String(v)} Baht/Unit`;
+}
+
+/** ✅ รองรับ deposit_type + deposit_value (จากชีท) */
+function resolveSecurityDepositMonths(dorm) {
+  // 1) ฟิลด์ตรง ๆ (ทั้งใน fees และใน dorm)
+  const direct = pickAny(dorm, [
+    "fees.security_deposit_months",
+    "fees.securityDepositMonths",
+    "fees.deposit_months",
+    "security_deposit_months",
+    "securityDepositMonths",
+    "deposit_months",
+  ]);
+  if (direct != null) return direct;
+
+  // 2) จากชีท: deposit_type + deposit_value (หรือใน fees)
+  const depType = pickAny(dorm, ["deposit_type", "fees.deposit_type", "depositType", "fees.depositType"]);
+  const depVal = pickAny(dorm, ["deposit_value", "fees.deposit_value", "depositValue", "fees.depositValue"]);
+
+  const t = String(depType || "").toLowerCase();
+  if (depVal != null) {
+    // ถ้า type บอกเป็นเดือน
+    if (t.includes("month") || t.includes("เดือน")) return depVal;
+    // ถ้า type ว่าง แต่ value เป็นเลข และระบบใช้เป็นเดือน ก็ยังโชว์ (ดีกว่า -)
+    const n = toNumberOrNull(depVal);
+    if (n != null) return n;
+  }
+
+  return null;
+}
+
+function resolveAdvanceRentMonths(dorm) {
+  return pickAny(dorm, [
+    "fees.advance_rent_months",
+    "fees.advanceRentMonths",
+    "advance_rent_months",
+    "advanceRentMonths",
+    "advance_rent_month",
+    "advanceRentMonth",
+  ]);
 }
 
 /** รูป 2 ใบ + ลูกศรซ้าย/ขวา */
@@ -240,42 +303,30 @@ export default function DormDetail() {
 
   const roomTypes = dorm?.room_types || dorm?.rooms || [];
 
-  // ✅ ราคา: รองรับ min/max หลายชื่อ + แสดงช่วง
+  // ✅ ราคา
   const minPrice =
-    dorm?.min_price_per_month ??
-    dorm?.minPrice ??
-    dorm?.price_min ??
-    dorm?.priceMin ??
-    null;
-
+    dorm?.min_price_per_month ?? dorm?.minPrice ?? dorm?.price_min ?? dorm?.priceMin ?? null;
   const maxPrice =
-    dorm?.max_price_per_month ??
-    dorm?.maxPrice ??
-    dorm?.price_max ??
-    dorm?.priceMax ??
-    null;
+    dorm?.max_price_per_month ?? dorm?.maxPrice ?? dorm?.price_max ?? dorm?.priceMax ?? null;
 
   const priceText =
     minPrice == null && maxPrice == null
       ? "-"
       : minPrice != null && maxPrice != null && minPrice !== maxPrice
-        ? `฿ ${formatMoney(minPrice)} - ${formatMoney(maxPrice)} / Month`
-        : `฿ ${formatMoney(minPrice ?? maxPrice)} / Month`;
+      ? `฿ ${formatMoney(minPrice)} - ${formatMoney(maxPrice)} / Month`
+      : `฿ ${formatMoney(minPrice ?? maxPrice)} / Month`;
 
-  // ✅ ระยะทาง: อ่าน distance_m จาก backend
+  // ✅ ระยะทาง
   const distanceM = dorm?.distance_m ?? null;
   const distanceText =
-    distanceM == null
-      ? "-"
-      : distanceM < 1000
-        ? `Within ${distanceM} m`
-        : `Within ${(distanceM / 1000).toFixed(1)} km`;
+    distanceM == null ? "-" : distanceM < 1000 ? `Within ${distanceM} m` : `Within ${(distanceM / 1000).toFixed(1)} km`;
 
-  const waterRate = dorm?.fees?.water_rate ?? dorm?.water_rate;
-  const electricRate = dorm?.fees?.electric_rate ?? dorm?.electric_rate;
-  const securityDeposit =
-    dorm?.fees?.security_deposit_months ?? dorm?.security_deposit_months;
-  const advanceRent = dorm?.fees?.advance_rent_months ?? dorm?.advance_rent_months;
+  /** ✅ FIX ตรงนี้: ดึงข้อมูล Fees/Deposit ให้เจอแน่นอน */
+  const waterRate = pickAny(dorm, ["fees.water_rate", "fees.waterRate", "water_rate", "waterRate"]);
+  const electricRate = pickAny(dorm, ["fees.electric_rate", "fees.electricRate", "electric_rate", "electricRate"]);
+
+  const securityDeposit = resolveSecurityDepositMonths(dorm); // ✅ รองรับ deposit_type/value
+  const advanceRent = resolveAdvanceRentMonths(dorm);
 
   const availableRooms = dorm?.available_rooms ?? dorm?.rooms_available ?? 0;
 
@@ -392,9 +443,7 @@ export default function DormDetail() {
                 </div>
 
                 <div className="text-right">
-                  <div className="text-[20px] font-extrabold text-[#F16323]">
-                    {priceText}
-                  </div>
+                  <div className="text-[20px] font-extrabold text-[#F16323]">{priceText}</div>
                   <div className="mt-2 flex items-center justify-end gap-2 text-[14px] text-[#F16323]">
                     <Users className="h-5 w-5" style={{ color: ORANGE }} />
                     <span>{availableRooms} rooms available</span>
@@ -402,11 +451,12 @@ export default function DormDetail() {
                 </div>
               </div>
 
+              {/* ✅ FIXED FEES */}
               <div className="mt-8 grid gap-8 md:grid-cols-2">
-                <InfoPair icon={Droplets} title="Water" value={waterRate ? `${waterRate} Bath/Unit` : "-"} />
-                <InfoPair icon={Zap} title="Fire" value={electricRate ? `${electricRate} Bath/Unit` : "-"} />
-                <InfoPair icon={HomeIcon} title="Security Deposit" value={securityDeposit != null ? `${securityDeposit} Month` : "-"} />
-                <InfoPair icon={HomeIcon} title="Advance Rent" value={advanceRent != null ? `${advanceRent} Month` : "-"} />
+                <InfoPair icon={Droplets} title="Water" value={rateText(waterRate)} />
+                <InfoPair icon={Zap} title="Electric" value={rateText(electricRate)} />
+                <InfoPair icon={HomeIcon} title="Security Deposit" value={monthText(securityDeposit)} />
+                <InfoPair icon={HomeIcon} title="Advance Rent" value={monthText(advanceRent)} />
               </div>
 
               <div className="mt-10">
@@ -456,7 +506,7 @@ export default function DormDetail() {
                 >
                   Close
                 </button>
-              </div>
+              </div>  
             </>
           )}
         </div>

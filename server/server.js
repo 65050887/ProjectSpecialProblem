@@ -16,7 +16,9 @@ const cors = require('cors')
 // middleware
 // ใช้ dev เป็น option ในการ log ข้อมูล request ที่เข้ามา เมื่อ refresh web จะเห็น log ที่ cmd ที่แตกต่างกัน
 app.use(morgan('dev'))
-app.use(express.json())
+// app.use(express.json())
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cors())
 
 app.set("etag", false);

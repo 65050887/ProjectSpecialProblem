@@ -1,3 +1,4 @@
+// client\src\pages\auth\Login.jsx
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Eye, EyeOff } from "lucide-react";

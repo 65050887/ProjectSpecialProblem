@@ -1,7 +1,5 @@
+// server/controllers/review.js
 const prisma = require("../config/prisma");
-
-// helper แปลง BigInt -> string กัน JSON พัง
-const toStr = (v) => (typeof v === "bigint" ? v.toString() : v);
 
 // GET /api/dorm/:dormId/reviews
 exports.listDormReviews = async (req, res) => {
@@ -9,149 +7,152 @@ exports.listDormReviews = async (req, res) => {
     const dormId = BigInt(req.params.dormId);
 
     const reviews = await prisma.reviews.findMany({
-      where: {
-        dorm_id: dormId,
-        deleted_at: null,
-      },
+      where: { dorm_id: dormId, deleted_at: null },
       orderBy: { created_at: "desc" },
       include: {
-        user: {
-          select: { user_id: true, username: true },
-        },
+        user: { select: { user_id: true, username: true } },
         replies: {
           where: { deleted_at: null },
           orderBy: { created_at: "asc" },
-          include: {
-            user: { select: { user_id: true, username: true } },
-          },
+          include: { user: { select: { user_id: true, username: true } } },
         },
+        likes: true,
       },
     });
 
-    const data = reviews.map((r) => ({
-      review_id: toStr(r.review_id),
-      dorm_id: toStr(r.dorm_id),
-      user_id: toStr(r.user_id),
-      rating: r.rating,
-      comment: r.comment,
-      created_at: r.created_at,
-      user: r.user
-        ? { user_id: toStr(r.user.user_id), username: r.user.username }
-        : null,
-      replies: (r.replies || []).map((rep) => ({
-        reply_id: toStr(rep.reply_id),
-        review_id: toStr(rep.review_id),
-        user_id: toStr(rep.user_id),
-        reply_text: rep.reply_text,
-        created_at: rep.created_at,
-        user: rep.user
-          ? { user_id: toStr(rep.user.user_id), username: rep.user.username }
-          : null,
-      })),
-    }));
+    const count = reviews.length;
+    const avg = count === 0 ? 0 : reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / count;
 
-    return res.json({ ok: true, reviews: data });
+    res.json({
+      dormId: dormId.toString(),
+      summary: {
+        avg_rating: Number(avg.toFixed(1)),
+        review_count: count,
+        stars: [1, 2, 3, 4, 5].reduce((acc, star) => {
+          acc[star] = reviews.filter((r) => Number(r.rating) === star).length;
+          return acc;
+        }, {}),
+      },
+      reviews: reviews.map((r) => ({
+        review_id: r.review_id.toString(),
+        dorm_id: r.dorm_id.toString(),
+        rating: Number(r.rating),
+        comment: r.comment,
+        created_at: r.created_at,
+        user: {
+          user_id: r.user.user_id.toString(),
+          username: r.user.username,
+        },
+        replies: (r.replies || []).map((rp) => ({
+          reply_id: rp.reply_id.toString(),
+          reply_text: rp.reply_text,
+          created_at: rp.created_at,
+          user: {
+            user_id: rp.user.user_id.toString(),
+            username: rp.user.username,
+          },
+        })),
+        like_count: (r.likes || []).length,
+      })),
+    });
   } catch (err) {
-    console.log("LIST REVIEWS ERROR:", err);
-    return res.status(500).json({ message: "Server Error" });
+    console.log("listDormReviews error:", err);
+    res.status(500).json({ message: "Failed to load reviews" });
   }
 };
 
-// POST /api/dorm/:dormId/reviews
-// body: { rating, comment }
+// POST /api/dorm/:dormId/reviews (authCheck)
 exports.createDormReview = async (req, res) => {
   try {
     const dormId = BigInt(req.params.dormId);
     const userId = BigInt(req.user.user_id);
 
-    const { rating, comment } = req.body;
+    const rating = Number(req.body.rating);
+    const comment = String(req.body.comment || "").trim();
 
-    if (rating === undefined || rating === null) {
-      return res.status(400).json({ message: "rating is required" });
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "rating must be 1-5" });
+    }
+    if (!comment) {
+      return res.status(400).json({ message: "comment is required" });
     }
 
-    const ratingNum = Number(rating);
-    if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-      return res.status(400).json({ message: "rating must be an integer between 1 and 5" });
-    }
-
-    // (optional) เช็คว่าหอมีจริงไหม
-    const dorm = await prisma.dorms.findUnique({
-      where: { dorm_id: dormId },
-      select: { dorm_id: true },
+    const exists = await prisma.reviews.findFirst({
+      where: { dorm_id: dormId, user_id: userId, deleted_at: null },
+      select: { review_id: true },
     });
-    if (!dorm) {
-      return res.status(404).json({ message: "Dorm not found" });
+    if (exists) {
+      return res.status(409).json({ message: "You already reviewed this dorm" });
     }
 
-    const review = await prisma.reviews.create({
+    const created = await prisma.reviews.create({
+      data: { dorm_id: dormId, user_id: userId, rating, comment },
+      include: { user: { select: { user_id: true, username: true } } },
+    });
+
+    const agg = await prisma.reviews.aggregate({
+      where: { dorm_id: dormId, deleted_at: null },
+      _avg: { rating: true },
+      _count: { review_id: true },
+    });
+
+    await prisma.dorms.update({
+      where: { dorm_id: dormId },
       data: {
-        dorm_id: dormId,
-        user_id: userId,
-        rating: ratingNum,
-        comment: comment ?? null,
+        avg_rating: agg._avg.rating ?? 0,
+        review_count: agg._count.review_id ?? 0,
       },
     });
 
-    return res.json({
-      ok: true,
+    res.status(201).json({
+      message: "Review created",
       review: {
-        review_id: review.review_id.toString(),
-        dorm_id: review.dorm_id.toString(),
-        user_id: review.user_id.toString(),
-        rating: review.rating,
-        comment: review.comment,
-        created_at: review.created_at,
+        review_id: created.review_id.toString(),
+        dorm_id: created.dorm_id.toString(),
+        rating: Number(created.rating),
+        comment: created.comment,
+        created_at: created.created_at,
+        user: {
+          user_id: created.user.user_id.toString(),
+          username: created.user.username,
+        },
       },
     });
   } catch (err) {
-    console.log("CREATE REVIEW ERROR:", err);
-    return res.status(500).json({ message: "Server Error" });
+    console.log("createDormReview error:", err);
+    res.status(500).json({ message: "Failed to create review" });
   }
 };
 
-// POST /api/reviews/:reviewId/replies
-// body: { reply_text }
+// POST /api/reviews/:reviewId/replies (authCheck)
 exports.replyReview = async (req, res) => {
   try {
     const reviewId = BigInt(req.params.reviewId);
     const userId = BigInt(req.user.user_id);
-    const { reply_text } = req.body;
+    const reply_text = String(req.body.reply_text || "").trim();
 
-    if (!reply_text) {
-      return res.status(400).json({ message: "reply_text is required" });
-    }
-
-    // เช็คว่า review มีอยู่จริง และยังไม่ถูกลบ
-    const review = await prisma.reviews.findUnique({
-      where: { review_id: reviewId },
-      select: { review_id: true, deleted_at: true },
-    });
-
-    if (!review || review.deleted_at) {
-      return res.status(404).json({ message: "Review not found" });
-    }
+    if (!reply_text) return res.status(400).json({ message: "reply_text is required" });
 
     const reply = await prisma.reviews_replies.create({
-      data: {
-        review_id: reviewId,
-        user_id: userId,
-        reply_text,
-      },
+      data: { review_id: reviewId, user_id: userId, reply_text },
+      include: { user: { select: { user_id: true, username: true } } },
     });
 
-    return res.json({
-      ok: true,
+    res.status(201).json({
+      message: "Reply created",
       reply: {
         reply_id: reply.reply_id.toString(),
         review_id: reply.review_id.toString(),
-        user_id: reply.user_id.toString(),
         reply_text: reply.reply_text,
         created_at: reply.created_at,
+        user: {
+          user_id: reply.user.user_id.toString(),
+          username: reply.user.username,
+        },
       },
     });
   } catch (err) {
-    console.log("REPLY REVIEW ERROR:", err);
-    return res.status(500).json({ message: "Server Error" });
+    console.log("replyReview error:", err);
+    res.status(500).json({ message: "Failed to reply review" });
   }
 };
