@@ -1,6 +1,5 @@
 // server\controllers\user.js
 const prisma = require("../config/prisma")
-const { create } = require("./product")
 
 exports.listUsers = async(req, res) => {
     try{

@@ -1,7 +1,7 @@
 // client\src\pages\user\Profile.jsx
 import React, { useEffect, useState } from "react";
 import { User as UserIcon, CalendarDays, Edit2, ShieldCheck, Settings, Clock, Upload, AlertCircle } from "lucide-react";
-import useEcomStore from "../../store/ecom-store";
+import useEcomStore from "../../store/ecom-store.jsx";
 import axios from "axios";
 
 const ORANGE = "#F16323";

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, Bell, User as UserIcon, CalendarDays } from "lucide-react";
-import useEcomStore from "../../store/ecom-store";
+import useEcomStore from "../../store/ecom-store.jsx";
 import UserSidebar from "../../components/UserSidebar";
 
 const ORANGE = "#F16323";

@@ -1,47 +1,44 @@
-// client/src/store/ecom-store.jsx
-import axios from "axios";
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 
-const API = "http://localhost:5000/api";
+function safeJSON(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
 
-const ecomStore = (set, get) => ({
-  user: null,
-  token: null,
+const useEcomStore = create((set, get) => ({
+  // ✅ อ่านจาก localStorage เพื่อให้รีเฟรชแล้วไม่หาย
+  token: localStorage.getItem("token") || "",
+  user: safeJSON(localStorage.getItem("user"), {}),
 
-  // ✅ Login
-  actionLogin: async (form) => {
-    const res = await axios.post(`${API}/login`, form);
-    set({
-      user: res.data.payload,   // payload จาก backend
-      token: res.data.token,
-    });
-    return res;
+  // ✅ ใช้ตอน login/register (ถ้ามี)
+  actionSetToken: (token) => {
+    const t = token || "";
+    set({ token: t });
+    if (t) localStorage.setItem("token", t);
+    else localStorage.removeItem("token");
   },
 
-  // ✅ set user ตรงๆ (ใช้ตอน update profile)
-  actionSetUser: (userObj) => {
-    set({ user: userObj });
+  // ✅ ใช้ตอน set/update ข้อมูลผู้ใช้
+  actionSetUser: (user) => {
+    const u = user || {};
+    set({ user: u });
+    localStorage.setItem("user", JSON.stringify(u));
   },
 
-  // ✅ update เฉพาะรูป (และ sync เข้า user ใน store)
-  actionUpdatePicture: (newPicture) => {
+  // ✅ ใช้ตอนอัปเดตรูปโปรไฟล์
+  actionUpdatePicture: (picture) => {
     const current = get().user || {};
-    set({
-      user: { ...current, picture: newPicture, avatar: newPicture },
-    });
+    const merged = { ...current, picture };
+    set({ user: merged });
+    localStorage.setItem("user", JSON.stringify(merged));
   },
 
-  // (แถม) logout
-  actionLogout: () => {
-    set({ user: null, token: null });
-  },
-});
+  // (เผื่อโค้ดหน้าอื่นอ้างชื่อพวกนี้)
+  currentUser: null,
+  profile: null,
+}));
 
-const usePersist = {
-  name: "ecom-storage",
-  storage: createJSONStorage(() => localStorage),
-};
-
-const useEcomStore = create(persist(ecomStore, usePersist));
 export default useEcomStore;

@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
-import useEcomStore from "../../store/ecom-store";
+import useEcomStore from "../../store/ecom-store.jsx";
 
 const ORANGE = "#F16323";
 

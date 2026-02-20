@@ -12,7 +12,7 @@ import {
   Settings,
   MoreHorizontal,
 } from "lucide-react";
-import useEcomStore from "../store/ecom-store";
+import useEcomStore from "../store/ecom-store.jsx";
 
 const ORANGE = "#F16323";
 
