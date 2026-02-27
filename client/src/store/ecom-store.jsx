@@ -1,4 +1,6 @@
+// client/src/store/ecom-store.jsx
 import { create } from "zustand";
+import axios from "axios";
 
 function safeJSON(value, fallback) {
   try {
@@ -7,6 +9,9 @@ function safeJSON(value, fallback) {
     return fallback;
   }
 }
+
+// ถ้ามี .env ให้ตั้ง VITE_API_URL=http://localhost:5000/api
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const useEcomStore = create((set, get) => ({
   // ✅ อ่านจาก localStorage เพื่อให้รีเฟรชแล้วไม่หาย
@@ -34,6 +39,26 @@ const useEcomStore = create((set, get) => ({
     const merged = { ...current, picture };
     set({ user: merged });
     localStorage.setItem("user", JSON.stringify(merged));
+  },
+
+  // ✅ สำคัญ: ใช้ตอน Login (หน้า Login.jsx เรียกตัวนี้)
+  actionLogin: async (form) => {
+    // form = { email, password }
+    const res = await axios.post(`${API}/login`, form);
+
+    const token = res.data?.token;
+    const payload = res.data?.payload;
+
+    if (token) get().actionSetToken(token);
+    if (payload) get().actionSetUser(payload);
+
+    return res;
+  },
+
+  // ✅ เผื่อใช้ตอน Logout
+  actionLogout: () => {
+    get().actionSetToken("");
+    get().actionSetUser({});
   },
 
   // (เผื่อโค้ดหน้าอื่นอ้างชื่อพวกนี้)
