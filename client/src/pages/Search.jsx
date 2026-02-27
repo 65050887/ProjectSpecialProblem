@@ -1,6 +1,6 @@
 // client/src/pages/Search.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search as SearchIcon,
   SlidersHorizontal,
@@ -304,7 +304,10 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
       className="overflow-hidden rounded-[20px] border-2 border-[#F16323] bg-white shadow-[0_10px_26px_rgba(0,0,0,0.10)] flex flex-col"
       style={{ width: CARD_W, height: CARD_H }}
     >
-      <div className="relative w-full overflow-hidden bg-white/5 flex-shrink-0" style={{ height: IMG_H }}>
+      <div
+        className="relative w-full overflow-hidden bg-white/5 flex-shrink-0"
+        style={{ height: IMG_H }}
+      >
         <img
           src={imgSrc}
           alt={dorm?.name || "dorm"}
@@ -391,7 +394,9 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
               </span>
             );
           })}
-          {!amenities.length ? <span className="text-[14px] font-semibold text-black/40">—</span> : null}
+          {!amenities.length ? (
+            <span className="text-[14px] font-semibold text-black/40">—</span>
+          ) : null}
         </div>
 
         <div className="mt-3 flex items-end justify-between gap-3">
@@ -464,6 +469,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
 /** ---------- Search Page ---------- */
 export default function Search() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [zone, setZone] = useState("All");
   const [q, setQ] = useState("");
@@ -493,13 +499,77 @@ export default function Search() {
     window.__dc_toast = window.setTimeout(() => setToast({ open: false, text: "" }), 1400);
   };
 
+  // ✅ sync params from URL (Home -> Search) ครบทุก category
+  useEffect(() => {
+    const qParam = (searchParams.get("q") || "").trim();
+    const zoneParam = (searchParams.get("zone") || "").trim();
+
+    // Location: distanceMax (meters) -> filters.distance (km)
+    const distanceMax = (searchParams.get("distanceMax") || "").trim();
+    const distanceKm =
+      distanceMax === "500"
+        ? "0.5"
+        : distanceMax === "1000"
+        ? "1"
+        : distanceMax === "2000"
+        ? "2"
+        : distanceMax === "3000"
+        ? "3"
+        : distanceMax === "4000"
+        ? "4"
+        : distanceMax === "5000"
+        ? "5"
+        : "";
+
+    // Prices
+    const priceMin = (searchParams.get("priceMin") || "").trim();
+    const priceMax = (searchParams.get("priceMax") || "").trim();
+
+    // Facilities
+    const petFriendly = (searchParams.get("petFriendly") || "").trim();
+    const amenitiesAll = searchParams.getAll("amenities");
+    const amenitiesRaw =
+      amenitiesAll.length > 0 ? amenitiesAll.join(",") : (searchParams.get("amenities") || "").trim();
+
+    // Dormitory Type
+    const dormitoryType = (searchParams.get("dormitoryType") || "").trim();
+    const genderParam = (searchParams.get("gender") || "").trim();
+
+    setQ(qParam);
+
+    if (zoneParam && ZONES.includes(zoneParam)) setZone(zoneParam);
+    else setZone("All");
+
+    setFilters(() => {
+      const next = { ...FILTER_DEFAULT };
+
+      if (distanceKm) next.distance = distanceKm;
+
+      if (priceMin) next.priceMin = priceMin;
+      if (priceMax) next.priceMax = priceMax;
+
+      if (petFriendly === "1" || petFriendly.toLowerCase() === "true") next.petFriendly = true;
+
+      if (amenitiesRaw) {
+        next.amenities = amenitiesRaw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+
+      const g = (genderParam || dormitoryType || "").toLowerCase();
+      if (g === "male" || g === "female" || g === "mix") next.gender = g;
+
+      return next;
+    });
+  }, [searchParams]);
+
   const addToCompare = async (d) => {
     const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
     const current = readCompare();
     const exists = current.some((x) => String(x?.id) === String(d.id));
 
-    // ✅ toggle remove
     if (exists) {
       const next = current.filter((x) => String(x?.id) !== String(d.id));
       writeCompare(next);
@@ -513,16 +583,13 @@ export default function Search() {
       return;
     }
 
-    // ✅ fetch detail เพื่อให้ได้ water_rate / electric_rate ฯลฯ
     let detailRaw = d.raw;
     try {
       const resp = await fetch(`${API}/dorm/${d.id}`);
       const json = await resp.json();
-      const dormDetail = json?.dorm || json?.data || json; // กันรูปแบบไม่ตรง
+      const dormDetail = json?.dorm || json?.data || json;
       if (resp.ok && dormDetail) detailRaw = { ...d.raw, ...dormDetail };
-    } catch {
-      // ถ้า fetch พัง ก็ใช้ raw เดิมไปก่อน
-    }
+    } catch {}
 
     const item = {
       id: d.id,
@@ -608,7 +675,11 @@ export default function Search() {
             zoneTextRaw && typeof zoneTextRaw === "string"
               ? (() => {
                   const z = zoneTextRaw.toLowerCase();
-                  if (z.includes("ฉลองกรุง 1") || z.includes("chalong") || z.includes("chalongkrung"))
+                  if (
+                    z.includes("ฉลองกรุง 1") ||
+                    z.includes("chalong") ||
+                    z.includes("chalongkrung")
+                  )
                     return "Chalongkrung 1";
                   if (z.includes("fbt")) return "FBT";
                   if (z.includes("นิคม") || z.includes("nikom")) return "Nikom";
@@ -670,11 +741,24 @@ export default function Search() {
     const hasPriceMin = String(f.priceMin || "").trim() !== "" && Number.isFinite(priceMinF);
     const hasPriceMax = String(f.priceMax || "").trim() !== "" && Number.isFinite(priceMaxF);
 
+    // ✅ Location: distance filter (km -> meters)
+    const distKm = Number(String(f.distance || "").trim());
+    const hasDist = String(f.distance || "").trim() !== "" && Number.isFinite(distKm);
+    const maxM = hasDist ? distKm * 1000 : null;
+
     return dorms
       .filter((d) => (zone === "All" ? true : d.zone === zone))
       .filter((d) => {
         if (f.verifiedOnly && !d.verified) return false;
 
+        // ✅ Location
+        if (hasDist) {
+          const dm = Number(d.distance_m ?? d.raw?.distance_m ?? null);
+          if (!Number.isFinite(dm)) return false;
+          if (dm > maxM) return false;
+        }
+
+        // ✅ Prices
         if (hasPriceMin) {
           const base = Number(d.priceMin ?? d.priceMax ?? 0);
           if (!Number.isFinite(base) || base < priceMinF) return false;
@@ -688,6 +772,7 @@ export default function Search() {
         if (f.hasAir && !hasAir) return false;
         if (f.hasFan && !hasFan) return false;
 
+        // ✅ Facilities: amenities
         if (Array.isArray(f.amenities) && f.amenities.length) {
           const setA = new Set((d.amenities || []).map((x) => String(x).toLowerCase()));
           for (const a of f.amenities) {
@@ -695,6 +780,7 @@ export default function Search() {
           }
         }
 
+        // ✅ Dormitory Type (gender policy)
         if (f.gender && f.gender !== "any") {
           const gp = String(d.raw?.gender_policy || "").toLowerCase();
           if (f.gender === "male" && !gp.includes("male")) return false;
@@ -702,6 +788,7 @@ export default function Search() {
           if (f.gender === "mix" && !gp.includes("mix")) return false;
         }
 
+        // ✅ Facilities: pet friendly
         if (f.petFriendly) {
           const pet = String(d.raw?.pet_friendly ?? d.raw?.petFriendly ?? "").toLowerCase();
           if (!(pet === "true" || pet === "1" || pet.includes("yes") || pet.includes("allow")))
@@ -731,10 +818,8 @@ export default function Search() {
     <div className="w-full bg-white">
       <Toast open={toast.open} message={toast.text} onClose={() => setToast({ open: false, text: "" })} />
 
-      {/* เผื่อแถบล่างทับ content */}
       <div className={compareList.length ? "pb-28" : ""}>
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 md:px-10">
-          {/* ===== TOP CARD ===== */}
           <div className="w-full rounded-[28px] border border-black/10 bg-white px-10 py-10 shadow-[0_18px_34px_rgba(0,0,0,0.12)] md:min-h-[320px]">
             <div className="flex items-start justify-between gap-6 pt-10">
               <div>
@@ -808,16 +893,13 @@ export default function Search() {
             </div>
           </div>
 
-          {/* ===== MAIN LAYOUT ===== */}
           <div className="mt-10 flex flex-col gap-10 lg:flex-row">
-            {/* LEFT */}
             <aside className={cn("w-full lg:w-[420px]", filtersOpen ? "block" : "hidden")}>
               <div className="lg:sticky lg:top-24">
                 <FilterPanel value={filters} onChange={setFilters} onClearAll={clearAllFilters} />
               </div>
             </aside>
 
-            {/* RIGHT */}
             <main className="flex-1">
               <div className="flex flex-wrap items-center gap-5">
                 <div className="text-[16px] font-bold text-[#F16323]">Filter by Zone :</div>
@@ -952,11 +1034,7 @@ export default function Search() {
         </div>
       </div>
 
-      <CompareBar
-        count={compareList.length}
-        onClear={clearCompare}
-        onSee={() => navigate("/compare")}
-      />
+      <CompareBar count={compareList.length} onClear={clearCompare} onSee={() => navigate("/compare")} />
     </div>
   );
 }

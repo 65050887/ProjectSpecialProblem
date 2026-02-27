@@ -1,4 +1,4 @@
-// client\src\pages\user\FavoritesUser.jsx
+// client/src/pages/user/FavoritesUser.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MapPin, Star, Eye } from "lucide-react";
@@ -32,18 +32,17 @@ function toDriveImageUrl(url = "") {
 export default function Favorites() {
   const navigate = useNavigate();
 
-  // ✅ ใช้ base เดียวกับหน้าอื่น (ถ้า VITE_API_URL มี /api ให้ strip ออก)
   const API_BASE =
     import.meta?.env?.VITE_API_URL?.replace(/\/?api\/?$/i, "") ||
     import.meta?.env?.VITE_API_BASE_URL ||
     "http://localhost:5000";
   const API = `${API_BASE}/api`;
 
-  // ✅ รองรับ key หลายอัน เผื่อโปรเจคมีของเก่า
-  const FAVORITE_KEYS = ["dc_favorites_v1", "dc_fav_v1_3", "favorites_v1"];
+  // ✅ ให้ตัวแรก “ตรงกับ SearchUser.jsx” (dc_fav_user_v1)
+  const FAVORITE_KEYS = ["dc_fav_user_v1", "dc_favorites_v1", "dc_fav_v1_3", "favorites_v1"];
 
-  const [favIds, setFavIds] = useState([]);        // ["682","673"...]
-  const [items, setItems] = useState([]);          // dorm objects
+  const [favIds, setFavIds] = useState([]); // ["682","673"...]
+  const [items, setItems] = useState([]); // dorm objects
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -62,8 +61,8 @@ export default function Favorites() {
       }
       return [];
     };
-
     setFavIds(readFavIds());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // helper: เขียนกลับ localStorage (ใช้ key แรกเป็นหลัก)
@@ -79,7 +78,6 @@ export default function Favorites() {
       setItems([]);
       return;
     }
-
     const controller = new AbortController();
 
     const run = async () => {
@@ -95,7 +93,6 @@ export default function Favorites() {
             return json?.dorm ?? json; // รองรับ response 2 แบบ
           })
         );
-
         setItems(results.filter(Boolean));
       } catch (e) {
         if (e?.name === "AbortError") return;
@@ -113,7 +110,6 @@ export default function Favorites() {
   const removeFavorite = (id) => {
     const next = favIds.filter((x) => String(x) !== String(id));
     persistFavIds(next);
-    // update list ทันที
     setItems((prev) => prev.filter((d) => String(d?.dorm_id ?? d?.id) !== String(id)));
   };
 
@@ -121,7 +117,6 @@ export default function Favorites() {
     return items.map((d) => {
       const dormId = String(d?.dorm_id ?? d?.id ?? "");
       const name = d?.dorm_name_th || d?.dorm_name_en || d?.dorm_name || "-";
-
       const cover =
         toDriveImageUrl(d?.cover_image_url) ||
         toDriveImageUrl(d?.images?.[0]?.image_url) ||
@@ -130,9 +125,7 @@ export default function Favorites() {
 
       const distanceM = Number(d?.distance_m);
       const distanceText = Number.isFinite(distanceM)
-        ? distanceM < 1000
-          ? `distance ${(distanceM / 1000).toFixed(1)} km from kmitl`
-          : `distance ${(distanceM / 1000).toFixed(1)} km from kmitl`
+        ? `distance ${(distanceM / 1000).toFixed(1)} km from kmitl`
         : "distance - from kmitl";
 
       const rating = Number(d?.avg_rating ?? d?.rating ?? 0);
@@ -153,126 +146,103 @@ export default function Favorites() {
   }, [items]);
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 py-8">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[340px_1fr]">
-        {/* LEFT: Sidebar */}
-        <UserSidebar className="w-full" />
+    <div className="mx-auto flex w-full max-w-6xl gap-10 pt-2 pb-10">
+      {/* ✅ Sidebar ให้กว้างเท่ากันทุกหน้า */}
+      <div className="w-[340px] shrink-0">
+        <UserSidebar />
+      </div>
 
-        {/* RIGHT: Content */}
-        <div>
-          {/* Title */}
-          <div className="mb-6 flex items-center gap-3" style={{ color: ORANGE }}>
-            <Heart className="h-7 w-7 fill-[#F16323] text-[#F16323]" />
-            <div className="text-[20px] font-extrabold">Favorite Dormitory</div>
+      <div className="min-w-0 flex-1">
+        <h1 className="text-[28px] font-bold" style={{ color: ORANGE }}>
+          Favorite Dormitory
+        </h1>
+
+        {loading && (
+          <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">Loading favorites...</div>
+        )}
+
+        {!loading && err && (
+          <div className="mt-6 rounded-2xl bg-white p-6 text-red-500 shadow-sm">{err}</div>
+        )}
+
+        {!loading && !err && favIds.length === 0 && (
+          <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <div className="text-lg font-bold">ยังไม่มีรายการโปรด</div>
+            <div className="mt-2 text-gray-600">
+              ไปที่ Search แล้วกดหัวใจเพื่อเพิ่มหอเข้ารายการโปรดได้เลย
+            </div>
+            <button
+              onClick={() => navigate("/user/search")}
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full px-6 font-bold text-white"
+              style={{ background: ORANGE }}
+            >
+              Go to Search
+            </button>
           </div>
+        )}
 
-          {/* Loading / Empty / Error */}
-          {loading && (
-            <div className="rounded-[14px] border p-6 text-center text-[14px] font-bold"
-                 style={{ borderColor: ORANGE, color: ORANGE }}>
-              Loading favorites...
-            </div>
-          )}
-
-          {!loading && err && (
-            <div className="rounded-[14px] border border-red-200 bg-red-50 p-6 text-center text-[14px] font-bold text-red-600">
-              {err}
-            </div>
-          )}
-
-          {!loading && !err && favIds.length === 0 && (
-            <div className="rounded-[14px] border p-10 text-center"
-                 style={{ borderColor: ORANGE }}>
-              <div className="text-[16px] font-extrabold" style={{ color: ORANGE }}>
-                ยังไม่มีรายการโปรด
-              </div>
-              <div className="mt-2 text-[13px] text-black/50">
-                ไปที่ Search แล้วกดหัวใจเพื่อเพิ่มหอเข้ารายการโปรดได้เลย
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate("/user/search")}
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-full px-6 font-extrabold text-white"
-                style={{ background: ORANGE }}
+        {!loading && !err && rows.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {rows.map((r) => (
+              <div
+                key={r.dormId}
+                className="flex gap-5 rounded-2xl bg-white p-4 shadow-sm"
               >
-                Go to Search
-              </button>
-            </div>
-          )}
+                <img
+                  src={r.cover}
+                  alt={r.name}
+                  className="h-[120px] w-[160px] rounded-xl object-cover"
+                  onError={(e) => (e.currentTarget.src = FALLBACK_IMG)}
+                  referrerPolicy="no-referrer"
+                />
 
-          {/* List */}
-          {!loading && !err && rows.length > 0 && (
-            <div className="space-y-6">
-              {rows.map((r) => (
-                <div
-                  key={r.dormId}
-                  className="rounded-[16px] border bg-white p-5"
-                  style={{ borderColor: ORANGE }}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex gap-5">
-                      <div className="h-[86px] w-[150px] overflow-hidden rounded-[14px] bg-black/5">
-                        <img
-                          src={r.cover}
-                          alt={r.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => (e.currentTarget.src = FALLBACK_IMG)}
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-lg font-extrabold">{r.name}</div>
 
-                      <div className="min-w-0">
-                        <div className="text-[18px] font-extrabold" style={{ color: ORANGE }}>
-                          {r.name}
-                        </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <span className="inline-flex items-center gap-2">
+                      <MapPin size={16} /> {r.distanceText}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Star size={16} />
+                      {Number(r.rating).toFixed(1)} ({r.reviewCount} Review)
+                    </span>
+                  </div>
 
-                        <div className="mt-1 flex items-center gap-2 text-[13px]" style={{ color: ORANGE }}>
-                          <MapPin className="h-4 w-4" />
-                          <span>{r.distanceText}</span>
-                        </div>
+                  <div className="mt-2 text-[15px] font-bold">{r.priceText}</div>
 
-                        <div className="mt-3 flex items-center gap-2 text-[13px]" style={{ color: ORANGE }}>
-                          <Star className="h-4 w-4 fill-[#F16323] text-[#F16323]" />
-                          <span>
-                            {Number(r.rating).toFixed(1)} ({r.reviewCount} Review)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      onClick={() => removeFavorite(r.dormId)}
+                      className="h-10 rounded-full bg-gray-300 px-6 text-[13px] font-bold text-white hover:opacity-90"
+                    >
+                      Remove
+                    </button>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="text-[14px] font-extrabold" style={{ color: ORANGE }}>
-                        {r.priceText}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => removeFavorite(r.dormId)}
-                          className="h-10 rounded-full bg-gray-300 px-6 text-[13px] font-bold text-white hover:opacity-90"
-                        >
-                          Remove
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/user/dorm/${r.dormId}?tab=details`)}
-                          className={cn(
-                            "inline-flex h-10 items-center gap-2 rounded-full border px-5 text-[13px] font-bold"
-                          )}
-                          style={{ borderColor: ORANGE, color: ORANGE }}
-                        >
-                          <Eye className="h-4 w-4" />
-                          See detail
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => navigate(`/user/dorm/${r.dormId}?tab=details`)}
+                      className={cn(
+                        "inline-flex h-10 items-center gap-2 rounded-full border px-5 text-[13px] font-bold"
+                      )}
+                      style={{ borderColor: ORANGE, color: ORANGE }}
+                    >
+                      <Eye size={16} /> See detail
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <button
+                  className="h-10 w-10 rounded-full"
+                  title="Favorite"
+                  style={{ background: `${ORANGE}1A` }}
+                  onClick={() => removeFavorite(r.dormId)}
+                >
+                  <Heart size={18} color={ORANGE} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
