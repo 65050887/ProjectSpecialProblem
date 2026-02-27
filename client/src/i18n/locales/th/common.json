@@ -1,0 +1,21 @@
+{
+  "appName": "DormConnect",
+  "nav": {
+    "home": "หน้าแรก",
+    "search": "ค้นหา",
+    "compare": "เปรียบเทียบ",
+    "favorites": "รายการโปรด"
+  },
+  "actions": {
+    "language": "ภาษา",
+    "theme": "ธีม",
+    "filters": "ตัวกรอง",
+    "clear": "ล้าง",
+    "seeDetails": "ดูรายละเอียด",
+    "contact": "ติดต่อ"
+  },
+  "status": {
+    "loading": "กำลังโหลด...",
+    "notFound": "ไม่พบข้อมูล"
+  }
+}

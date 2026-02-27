@@ -5,22 +5,41 @@ const jwt = require("jsonwebtoken");
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const {
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      fullname,
+    } = req.body;
 
-    if (!username) return res.status(400).json({ message: "Username is required" });
-    if (!email) return res.status(400).json({ message: "Email is required" });
-    if (!password) return res.status(400).json({ message: "Password is required" });
+    const finalEmail = String(email || "").trim().toLowerCase();
+    const finalPassword = String(password || "");
 
-    const user = await prisma.users.findFirst({ where: { email } });
-    if (user) return res.status(400).json({ message: "Email already exists" });
+    const full =
+      String(fullname || [firstName, lastName].filter(Boolean).join(" ")).trim() ||
+      "";
 
-    const hashPassword = await bcrypt.hash(password, 10);
+    // สร้าง username ให้เองถ้าไม่ได้ส่งมา
+    const finalUsername =
+      String(username || full || (finalEmail ? finalEmail.split("@")[0] : "")).trim();
+
+    if (!finalUsername) return res.status(400).json({ message: "Username is required" });
+    if (!finalEmail) return res.status(400).json({ message: "Email is required" });
+    if (!finalPassword) return res.status(400).json({ message: "Password is required" });
+
+    const existed = await prisma.users.findFirst({ where: { email: finalEmail } });
+    if (existed) return res.status(400).json({ message: "Email already exists" });
+
+    const hashPassword = await bcrypt.hash(finalPassword, 10);
 
     await prisma.users.create({
       data: {
-        username,
-        email,
+        username: finalUsername,
+        email: finalEmail,
         password_hash: hashPassword,
+        fullname: full || null,
       },
     });
 
@@ -35,10 +54,11 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.users.findFirst({ where: { email } });
+    const finalEmail = String(email || "").trim().toLowerCase();
+    const user = await prisma.users.findFirst({ where: { email: finalEmail } });
     if (!user) return res.status(400).json({ message: "Email not found" });
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = await bcrypt.compare(String(password || ""), user.password_hash);
     if (!isMatch) return res.status(400).json({ message: "Password Invalid!!" });
 
     const payload = {
@@ -62,25 +82,19 @@ exports.login = async (req, res) => {
 
 exports.currentUser = async (req, res) => {
   try {
-    // authCheck set req.user ไว้แล้ว
     const email = req.user?.email;
     if (!email) return res.status(401).json({ message: "Unauthorized" });
 
     const user = await prisma.users.findFirst({
       where: { email },
-      select: {
-        user_id: true,
-        email: true,
-        username: true,
-        // ✅ ห้าม select role ถ้าใน schema ไม่มี
-      },
+      select: { user_id: true, email: true, username: true },
     });
 
     if (!user) return res.status(401).json({ message: "User not found" });
 
     return res.json({
       user: {
-        user_id: user.user_id?.toString(),
+        user_id: user.user_id.toString(),
         email: user.email,
         username: user.username,
       },

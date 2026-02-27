@@ -71,4 +71,3 @@ function SidebarRow({ label, Icon, active, isOverview }) {
     </div>
   );
 }
-

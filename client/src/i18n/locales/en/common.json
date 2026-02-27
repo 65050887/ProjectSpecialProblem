@@ -1,0 +1,21 @@
+{
+  "appName": "DormConnect",
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "compare": "Compare",
+    "favorites": "Favorites"
+  },
+  "actions": {
+    "language": "Language",
+    "theme": "Theme",
+    "filters": "Filters",
+    "clear": "Clear",
+    "seeDetails": "See Details",
+    "contact": "Contact"
+  },
+  "status": {
+    "loading": "Loading...",
+    "notFound": "Not found"
+  }
+}

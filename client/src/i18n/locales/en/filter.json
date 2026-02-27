@@ -1,0 +1,60 @@
+{
+  "title": "Filters",
+  "clear": "Clear",
+  "clearAll": "Clear all filter ({{count}})",
+  "selectDistance": "Select Distance",
+  "selectRoomType": "Select Room Type",
+  "selectSort": "Select Sort",
+  "selectDormitoryType": "Select Dormitory Type",
+  "selectContractPeriod": "Select Contract Period",
+
+  "distance": {
+    "0_5": "Radius within 500 m",
+    "1": "Radius within 1 km",
+    "2": "Radius within 2 km",
+    "3": "Radius within 3 km",
+    "4": "Radius within 4 km",
+    "5": "Radius within 5 km",
+    "5plus": "Radius more than 5 km"
+  },
+
+  "roomType": {
+    "single": "Single Room",
+    "twin": "Twin Room"
+  },
+
+  "sort": {
+    "price_high": "Price: Maximum to Minimum",
+    "price_low": "Price: Minimum to Maximum",
+    "distance_far": "Distance: Far to Near",
+    "distance_near": "Distance: Near to Far",
+    "rating_good": "Rating: Good to Bad",
+    "rating_bad": "Rating: Bad to Good"
+  },
+
+  "dormitoryType": {
+    "male": "Male",
+    "female": "Female",
+    "mix": "Mix"
+  },
+
+  "petFriendly": "Pet Friendly",
+  "selectAll": "Select All",
+
+  "amenities": {
+    "wifi": "Wi‑Fi",
+    "parking": "Parking",
+    "laundry": "Laundry",
+    "gym": "Gym",
+    "air": "Air conditioner",
+    "key card": "Key card",
+    "wardrobe": "Wardrobe",
+    "fan": "Fan",
+    "furnitures": "Furnitures",
+    "security": "Security",
+    "table": "Table",
+    "bed": "Bed",
+    "water heatsr": "Water heater",
+    "drink water": "Drinking water"
+  }
+}

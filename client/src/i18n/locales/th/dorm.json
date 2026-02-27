@@ -1,0 +1,18 @@
+{
+  "fields": {
+    "price": "ราคา",
+    "electric": "ค่าไฟ",
+    "water": "ค่าน้ำ",
+    "internet": "อินเทอร์เน็ต",
+    "facilities": "สิ่งอำนวยความสะดวก",
+    "distance": "ระยะทาง",
+    "dormType": "ประเภทหอ"
+  },
+  "values": {
+    "free": "ฟรี",
+    "none": "—",
+    "onlyFemale": "หญิงล้วน",
+    "onlyMale": "ชายล้วน",
+    "mixed": "หอรวม"
+  }
+}
