@@ -1,6 +1,8 @@
-import React from "react";
+// client\src\components\UserSidebar.jsx
+import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { Home as HomeIcon, Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ORANGE = "#F16323";
 
@@ -9,10 +11,15 @@ function cn(...classes) {
 }
 
 export default function UserSidebar({ className = "" }) {
-  const items = [
-    { label: "Overview", to: "/user/dashboard", Icon: HomeIcon },
-    { label: "Favorite", to: "/user/favorites", Icon: Heart },
-  ];
+  const { t } = useTranslation(["common"]);
+
+  const items = useMemo(
+    () => [
+      { label: t("user.overview", { ns: "common" }), to: "/user/dashboard", Icon: HomeIcon },
+      { label: t("nav.favorites", { ns: "common" }), to: "/user/favorites", Icon: Heart },
+    ],
+    [t]
+  );
 
   return (
     <aside

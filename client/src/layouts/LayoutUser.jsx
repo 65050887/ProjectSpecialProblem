@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import useEcomStore from "../store/ecom-store.jsx";
 
+// ✅ i18n
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "../i18n";
+
 const ORANGE = "#F16323";
 
 function cn(...classes) {
@@ -22,6 +26,19 @@ function cn(...classes) {
 
 export default function LayoutUser() {
   const navigate = useNavigate();
+
+  // ✅ i18n hook
+  const { t, i18n } = useTranslation(["common", "auth"]);
+
+  const currentLng = useMemo(() => {
+    const lng = String(i18n.language || "th").toLowerCase();
+    return lng.startsWith("en") ? "en" : "th";
+  }, [i18n.language]);
+
+  const toggleLang = async () => {
+    const next = currentLng === "en" ? "th" : "en";
+    await changeLanguage(next);
+  };
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -35,8 +52,13 @@ export default function LayoutUser() {
 
   const displayName = useMemo(() => {
     const u = user || {};
-    return u.username || u.user?.username || u.payload?.username || "Student";
-  }, [user]);
+    return (
+      u.username ||
+      u.user?.username ||
+      u.payload?.username ||
+      t("user.fallbackName", { ns: "common" })
+    );
+  }, [user, t]);
 
   const emailText = useMemo(() => {
     return user?.email || user?.user?.email || "user@kmitl.ac.th";
@@ -51,11 +73,12 @@ export default function LayoutUser() {
     );
 
   // ====== Notifications (mock; ต่อ API ทีหลังได้) ======
+  // เก็บเป็น key เพื่อให้สลับภาษาแล้วข้อความเปลี่ยนตามได้
   const [notifications, setNotifications] = useState([
     {
       id: "n1",
-      title: "Welcome to DormConnect KMITL !",
-      time: "Now",
+      titleKey: "notifications.welcome",
+      timeKey: "notifications.now",
       isRead: false,
     },
   ]);
@@ -91,16 +114,16 @@ export default function LayoutUser() {
     }
 
     function onMouseDown(e) {
-      const t = e.target;
+      const tEl = e.target;
 
       // ถ้าคลิกนอก notif dropdown -> ปิด notif และเมนูย่อย
-      if (notifWrapRef.current && !notifWrapRef.current.contains(t)) {
+      if (notifWrapRef.current && !notifWrapRef.current.contains(tEl)) {
         setNotifOpen(false);
         setNotifMenuOpenId(null);
       }
 
       // ถ้าคลิกนอก profile dropdown -> ปิด profile
-      if (profileWrapRef.current && !profileWrapRef.current.contains(t)) {
+      if (profileWrapRef.current && !profileWrapRef.current.contains(tEl)) {
         setProfileOpen(false);
       }
     }
@@ -133,6 +156,7 @@ export default function LayoutUser() {
                 className="h-full w-full object-cover"
               />
             </div>
+
             <span className="hidden text-lg font-bold text-[#F16323] sm:block">
               DormConnect KMITL
             </span>
@@ -141,12 +165,12 @@ export default function LayoutUser() {
           <div className="hidden flex-1 items-center justify-center gap-4 md:flex">
             <NavLink to="/user" end className={navClass}>
               <HomeIcon className="h-5 w-5" />
-              HOME
+              {t("nav.home", { ns: "common" })}
             </NavLink>
 
             <NavLink to="/user/search" className={navClass}>
               <SearchIcon className="h-5 w-5" />
-              Search Dormitories
+              {t("nav.searchDormitories", { ns: "common" })}
             </NavLink>
           </div>
 
@@ -157,7 +181,7 @@ export default function LayoutUser() {
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
-                aria-label="notifications"
+                aria-label={t("notifications.title", { ns: "common" })}
                 onClick={() => {
                   setNotifOpen((s) => !s);
                   setProfileOpen(false);
@@ -179,7 +203,7 @@ export default function LayoutUser() {
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Bell className="h-5 w-5" style={{ color: ORANGE }} />
                     <div className="text-[16px] font-bold" style={{ color: ORANGE }}>
-                      Notification
+                      {t("notifications.title", { ns: "common" })}
                     </div>
                   </div>
                   <div className="h-px w-full" style={{ background: `${ORANGE}33` }} />
@@ -188,7 +212,7 @@ export default function LayoutUser() {
                   <div className="px-3 py-3">
                     {notifications.length === 0 ? (
                       <div className="rounded-2xl border border-black/10 px-3 py-4 text-[16px] text-black/60">
-                        No notifications
+                        {t("notifications.empty", { ns: "common" })}
                       </div>
                     ) : (
                       <div
@@ -217,7 +241,9 @@ export default function LayoutUser() {
                                   )}
                                   style={{ color: ORANGE }}
                                 >
-                                  {n.title}
+                                  {n.titleKey
+                                    ? t(n.titleKey, { ns: "common" })
+                                    : n.title}
                                 </div>
 
                                 {/* More menu */}
@@ -225,7 +251,7 @@ export default function LayoutUser() {
                                   <button
                                     type="button"
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5"
-                                    aria-label="more"
+                                    aria-label={t("actions.more", { ns: "common" })}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setNotifMenuOpenId((cur) =>
@@ -254,7 +280,7 @@ export default function LayoutUser() {
                                         style={{ color: ORANGE }}
                                         onClick={() => markNotifRead(n.id, true)}
                                       >
-                                        Mark as read
+                                        {t("notifications.markRead", { ns: "common" })}
                                       </button>
 
                                       <button
@@ -263,7 +289,7 @@ export default function LayoutUser() {
                                         style={{ color: ORANGE }}
                                         onClick={() => markNotifRead(n.id, false)}
                                       >
-                                        Mark as unread
+                                        {t("notifications.markUnread", { ns: "common" })}
                                       </button>
 
                                       <div
@@ -277,7 +303,7 @@ export default function LayoutUser() {
                                         style={{ color: "#DC2626" }}
                                         onClick={() => deleteNotif(n.id)}
                                       >
-                                        Delete
+                                        {t("actions.delete", { ns: "common" })}
                                       </button>
                                     </div>
                                   )}
@@ -285,14 +311,8 @@ export default function LayoutUser() {
                               </div>
 
                               {/* time */}
-                              <div
-                                className={cn(
-                                  "mt-1",
-                                  "text-xs"
-                                )}
-                                style={{ color: ORANGE }}
-                              >
-                                {n.time}
+                              <div className={cn("mt-1", "text-xs")} style={{ color: ORANGE }}>
+                                {n.timeKey ? t(n.timeKey, { ns: "common" }) : n.time}
                               </div>
                             </div>
                           </div>
@@ -315,7 +335,7 @@ export default function LayoutUser() {
                         background: "white",
                       }}
                     >
-                      View all
+                      {t("notifications.viewAll", { ns: "common" })}
                     </button>
 
                     <button
@@ -328,7 +348,7 @@ export default function LayoutUser() {
                         background: "white",
                       }}
                     >
-                      Clear all
+                      {t("notifications.clearAll", { ns: "common" })}
                     </button>
                   </div>
                 </div>
@@ -338,7 +358,7 @@ export default function LayoutUser() {
             <button
               type="button"
               className="hidden h-11 w-11 items-center justify-center rounded-full text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
-              aria-label="theme"
+              aria-label={t("actions.theme", { ns: "common" })}
             >
               <Moon className="h-6 w-6" style={{ color: ORANGE }} />
             </button>
@@ -346,10 +366,13 @@ export default function LayoutUser() {
             <button
               type="button"
               className="hidden items-center gap-2 rounded-full px-4 py-2 font-bold text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
-              aria-label="language"
+              aria-label={t("actions.language", { ns: "common" })}
+              onClick={toggleLang}
             >
               <Globe className="h-6 w-6" style={{ color: ORANGE }} />
-              <span className="text-sm font-bold text-[#F16323]">EN</span>
+              <span className="text-sm font-bold text-[#F16323]">
+                {currentLng.toUpperCase()}
+              </span>
             </button>
 
             {/* ===== User Dropdown ===== */}
@@ -402,7 +425,7 @@ export default function LayoutUser() {
                       className="flex items-center gap-2 rounded-full px-4 py-2 text-left text-sm font-semibold text-[#F16323] bg-white hover:bg-white/95 transition"
                     >
                       <HomeIcon className="h-5 w-5" />
-                      <span>Dashboard</span>
+                      <span>{t("user.dashboard", { ns: "common" })}</span>
                     </button>
 
                     <button
@@ -414,7 +437,7 @@ export default function LayoutUser() {
                       className="flex items-center gap-2 text-left text-sm font-semibold text-white hover:opacity-90 transition"
                     >
                       <Settings className="h-5 w-5" />
-                      <span>Profile</span>
+                      <span>{t("user.profile", { ns: "common" })}</span>
                     </button>
 
                     <div className="h-px bg-white/60" />
@@ -429,7 +452,7 @@ export default function LayoutUser() {
                       className="flex items-center gap-2 text-left text-sm font-semibold text-white hover:opacity-90 transition"
                     >
                       <LogOut className="h-5 w-5" />
-                      <span>Log out</span>
+                      <span>{t("logout", { ns: "auth" })}</span>
                     </button>
                   </div>
                 </div>

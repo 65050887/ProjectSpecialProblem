@@ -1,19 +1,23 @@
-// client\src\components\MainNav.jsx
-import React, { useState } from "react";
+// client/src/components/MainNav.jsx
+import React, { useMemo, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import {
-  Home,
-  Search,
-  Users,
-  Moon,
-  Globe,
-  User,
-  Menu,
-  X,
-} from "lucide-react";
+import { Home, Search, Users, Moon, Globe, User, Menu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "../i18n";
 
 const MainNav = () => {
   const [open, setOpen] = useState(false);
+  const { t, i18n } = useTranslation(["common", "auth"]);
+
+  const currentLng = useMemo(() => {
+    const lng = String(i18n.language || "th").toLowerCase();
+    return lng.startsWith("en") ? "en" : "th";
+  }, [i18n.language]);
+
+  const toggleLang = async () => {
+    const next = currentLng === "en" ? "th" : "en";
+    await changeLanguage(next);
+  };
 
   const navPill = ({ isActive }) =>
     [
@@ -40,9 +44,7 @@ const MainNav = () => {
           className="flex shrink-0 items-center gap-3"
           onClick={() => setOpen(false)}
         >
-          {/* Logo */}
           <div className="h-[50px] w-[70px] overflow-hidden rounded-[20px] bg-[#F16323]/10">
-            {/* ใส่โลโก้จริง: วางไฟล์ไว้ที่ /public/logo-dorm2.png */}
             <img
               src="/logo/logo.png"
               alt="DormConnect logo"
@@ -59,12 +61,12 @@ const MainNav = () => {
         <nav className="hidden flex-1 items-center justify-center gap-4 md:flex">
           <NavLink to="/" className={navPill} end>
             <Home className="h-5 w-5" />
-            HOME
+            {t("nav.home", { ns: "common" })}
           </NavLink>
 
           <NavLink to="/search" className={navPill}>
             <Search className="h-5 w-5" />
-            Search Dormitories
+            {t("nav.searchDormitories", { ns: "common" })}
           </NavLink>
         </nav>
 
@@ -74,7 +76,7 @@ const MainNav = () => {
           <button
             type="button"
             className="hidden h-11 w-11 items-center justify-center rounded-full 10 text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
-            aria-label="Toggle theme"
+            aria-label={t("actions.theme", { ns: "common" })}
           >
             <Moon className="h-6 w-6" />
           </button>
@@ -83,10 +85,11 @@ const MainNav = () => {
           <button
             type="button"
             className="hidden items-center gap-2 rounded-full 10 px-4 py-2 font-bold text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
-            aria-label="Language"
+            aria-label={t("actions.language", { ns: "common" })}
+            onClick={toggleLang}
           >
             <Globe className="h-5 w-5" />
-            EN
+            {currentLng.toUpperCase()}
           </button>
 
           {/* login */}
@@ -96,14 +99,14 @@ const MainNav = () => {
             onClick={() => setOpen(false)}
           >
             <User className="h-5 w-5" />
-            Login
+            {t("login", { ns: "auth" })}
           </Link>
 
           {/* mobile menu button */}
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#F16323]/10 text-[#F16323] hover:bg-[#F16323]/15 md:hidden"
-            aria-label="Open menu"
+            aria-label={open ? t("common:actions.close") : t("common:actions.openMenu")}
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -123,7 +126,7 @@ const MainNav = () => {
                 onClick={() => setOpen(false)}
               >
                 <Home className="h-5 w-5" />
-                HOME
+                {t("nav.home", { ns: "common" })}
               </NavLink>
 
               <NavLink
@@ -132,7 +135,7 @@ const MainNav = () => {
                 onClick={() => setOpen(false)}
               >
                 <Search className="h-5 w-5" />
-                Search Dormitories
+                {t("nav.searchDormitories", { ns: "common" })}
               </NavLink>
 
               <NavLink
@@ -141,7 +144,7 @@ const MainNav = () => {
                 onClick={() => setOpen(false)}
               >
                 <Users className="h-5 w-5" />
-                Community
+                {t("nav.community", { ns: "common" })}
               </NavLink>
 
               <div className="mt-2 flex items-center justify-between gap-2 px-2 pb-2">
@@ -150,14 +153,15 @@ const MainNav = () => {
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#F16323]/10 px-4 py-3 font-bold text-[#F16323] hover:bg-[#F16323]/15"
                 >
                   <Moon className="h-5 w-5" />
-                  Theme
+                  {t("actions.theme", { ns: "common" })}
                 </button>
                 <button
                   type="button"
+                  onClick={toggleLang}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#F16323]/10 px-4 py-3 font-bold text-[#F16323] hover:bg-[#F16323]/15"
                 >
                   <Globe className="h-5 w-5" />
-                  EN
+                  {currentLng.toUpperCase()}
                 </button>
               </div>
             </div>
@@ -165,7 +169,6 @@ const MainNav = () => {
         </div>
       )}
 
-      {/* Divider line */}
       <div className="h-px w-full bg-black/10" />
     </header>
   );

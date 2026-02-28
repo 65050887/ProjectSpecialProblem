@@ -3,6 +3,8 @@
   "nav": {
     "home": "Home",
     "search": "Search",
+    "searchDormitories": "Search Dormitories",
+    "community": "Community",
     "compare": "Compare",
     "favorites": "Favorites"
   },
@@ -12,10 +14,30 @@
     "filters": "Filters",
     "clear": "Clear",
     "seeDetails": "See Details",
-    "contact": "Contact"
+    "contact": "Contact",
+    "openMenu": "Open menu",
+    "close": "Close",
+    "more": "More",
+    "delete": "Delete"
   },
   "status": {
     "loading": "Loading...",
     "notFound": "Not found"
+  },
+  "notifications": {
+    "title": "Notification",
+    "empty": "No notifications",
+    "welcome": "Welcome to DormConnect KMITL!",
+    "now": "Now",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "viewAll": "View all",
+    "clearAll": "Clear all"
+  },
+  "user": {
+    "fallbackName": "Student",
+    "overview": "Overview",
+    "dashboard": "Dashboard",
+    "profile": "Profile"
   }
 }

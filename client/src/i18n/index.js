@@ -45,9 +45,9 @@ i18n
     react: { useSuspense: false },
   });
 
-  i18n.on("languageChanged", (lng) => {
-    document.documentElement.lang = lng;
-  });
+i18n.on("languageChanged", (lng) => {
+  document.documentElement.lang = lng;
+});
 
 // ตั้งค่าเริ่มต้นด้วย (กันตอน reload)
 document.documentElement.lang = i18n.language || "th";
