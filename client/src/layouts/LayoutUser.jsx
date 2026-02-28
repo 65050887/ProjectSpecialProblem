@@ -1,4 +1,3 @@
-// client/src/layouts/LayoutUser.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import useEcomStore from "../store/ecom-store.jsx";
 
-// ✅ i18n
 import { useTranslation } from "react-i18next";
 import { changeLanguage } from "../i18n";
 
@@ -26,8 +24,6 @@ function cn(...classes) {
 
 export default function LayoutUser() {
   const navigate = useNavigate();
-
-  // ✅ i18n hook
   const { t, i18n } = useTranslation(["common", "auth"]);
 
   const currentLng = useMemo(() => {
@@ -42,11 +38,8 @@ export default function LayoutUser() {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-
-  // เมนูย่อยของปุ่ม "..." (เก็บ id ของแจ้งเตือนที่กำลังเปิดเมนู)
   const [notifMenuOpenId, setNotifMenuOpenId] = useState(null);
 
-  // ✅ ปรับชื่อ key ให้เข้ากับ store ของหนูได้
   const user = useEcomStore((s) => s.user || s.currentUser || s.profile || null);
   const actionLogout = useEcomStore((s) => s.actionLogout || null);
 
@@ -72,21 +65,12 @@ export default function LayoutUser() {
         : "text-[#F16323] hover:bg-[#F16323]/10"
     );
 
-  // ====== Notifications (mock; ต่อ API ทีหลังได้) ======
-  // เก็บเป็น key เพื่อให้สลับภาษาแล้วข้อความเปลี่ยนตามได้
   const [notifications, setNotifications] = useState([
-    {
-      id: "n1",
-      titleKey: "notifications.welcome",
-      timeKey: "notifications.now",
-      isRead: false,
-    },
+    { id: "n1", titleKey: "notifications.welcome", timeKey: "notifications.now", isRead: false },
   ]);
 
   const markNotifRead = (id, read = true) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: read } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: read } : n)));
     setNotifMenuOpenId(null);
   };
 
@@ -100,7 +84,6 @@ export default function LayoutUser() {
     setNotifMenuOpenId(null);
   };
 
-  // ====== click outside + ESC close ======
   const notifWrapRef = useRef(null);
   const profileWrapRef = useRef(null);
 
@@ -116,13 +99,11 @@ export default function LayoutUser() {
     function onMouseDown(e) {
       const tEl = e.target;
 
-      // ถ้าคลิกนอก notif dropdown -> ปิด notif และเมนูย่อย
       if (notifWrapRef.current && !notifWrapRef.current.contains(tEl)) {
         setNotifOpen(false);
         setNotifMenuOpenId(null);
       }
 
-      // ถ้าคลิกนอก profile dropdown -> ปิด profile
       if (profileWrapRef.current && !profileWrapRef.current.contains(tEl)) {
         setProfileOpen(false);
       }
@@ -138,28 +119,18 @@ export default function LayoutUser() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top bar */}
       <header className="sticky top-0 z-50 w-full bg-white shadow-[0_4px_4px_rgba(0,0,0,0.08)]">
         <div className="mx-auto flex h-[90px] max-w-7xl items-center justify-between gap-6 px-4 md:px-10">
-          {/* Brand */}
           <button
             type="button"
             onClick={() => navigate("/user")}
             className="flex shrink-0 items-center gap-3"
             aria-label="go-user-home"
           >
-            {/* Logo */}
             <div className="h-[50px] w-[70px] overflow-hidden rounded-[20px] bg-[#F16323]/10">
-              <img
-                src="/logo/logo.png"
-                alt="DormConnect logo"
-                className="h-full w-full object-cover"
-              />
+              <img src="/logo/logo.png" alt="DormConnect logo" className="h-full w-full object-cover" />
             </div>
-
-            <span className="hidden text-lg font-bold text-[#F16323] sm:block">
-              DormConnect KMITL
-            </span>
+            <span className="hidden text-lg font-bold text-[#F16323] sm:block">DormConnect KMITL</span>
           </button>
 
           <div className="hidden flex-1 items-center justify-center gap-4 md:flex">
@@ -174,9 +145,7 @@ export default function LayoutUser() {
             </NavLink>
           </div>
 
-          {/* Right actions */}
           <div className="flex items-center gap-4">
-            {/* ===== Notification Button + Dropdown ===== */}
             <div className="relative" ref={notifWrapRef}>
               <button
                 type="button"
@@ -199,7 +168,6 @@ export default function LayoutUser() {
                     boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
                   }}
                 >
-                  {/* Header */}
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Bell className="h-5 w-5" style={{ color: ORANGE }} />
                     <div className="text-[16px] font-bold" style={{ color: ORANGE }}>
@@ -208,7 +176,6 @@ export default function LayoutUser() {
                   </div>
                   <div className="h-px w-full" style={{ background: `${ORANGE}33` }} />
 
-                  {/* List */}
                   <div className="px-3 py-3">
                     {notifications.length === 0 ? (
                       <div className="rounded-2xl border border-black/10 px-3 py-4 text-[16px] text-black/60">
@@ -224,15 +191,10 @@ export default function LayoutUser() {
                       >
                         {notifications.map((n) => (
                           <div key={n.id} className="flex items-start gap-3">
-                            {/* avatar circle */}
-                            <div
-                              className="mt-1 h-8 w-8 rounded-full"
-                              style={{ background: ORANGE }}
-                            />
+                            <div className="mt-1 h-8 w-8 rounded-full" style={{ background: ORANGE }} />
 
                             <div className="flex-1">
                               <div className="flex items-start justify-between gap-3">
-                                {/* title */}
                                 <div
                                   className={cn(
                                     "leading-snug",
@@ -241,12 +203,9 @@ export default function LayoutUser() {
                                   )}
                                   style={{ color: ORANGE }}
                                 >
-                                  {n.titleKey
-                                    ? t(n.titleKey, { ns: "common" })
-                                    : n.title}
+                                  {n.titleKey ? t(n.titleKey, { ns: "common" }) : n.title}
                                 </div>
 
-                                {/* More menu */}
                                 <div className="relative">
                                   <button
                                     type="button"
@@ -254,15 +213,10 @@ export default function LayoutUser() {
                                     aria-label={t("actions.more", { ns: "common" })}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setNotifMenuOpenId((cur) =>
-                                        cur === n.id ? null : n.id
-                                      );
+                                      setNotifMenuOpenId((cur) => (cur === n.id ? null : n.id));
                                     }}
                                   >
-                                    <MoreHorizontal
-                                      className="h-4 w-4"
-                                      style={{ color: ORANGE }}
-                                    />
+                                    <MoreHorizontal className="h-4 w-4" style={{ color: ORANGE }} />
                                   </button>
 
                                   {notifMenuOpenId === n.id && (
@@ -292,10 +246,7 @@ export default function LayoutUser() {
                                         {t("notifications.markUnread", { ns: "common" })}
                                       </button>
 
-                                      <div
-                                        className="h-px w-full"
-                                        style={{ background: `${ORANGE}22` }}
-                                      />
+                                      <div className="h-px w-full" style={{ background: `${ORANGE}22` }} />
 
                                       <button
                                         type="button"
@@ -310,7 +261,6 @@ export default function LayoutUser() {
                                 </div>
                               </div>
 
-                              {/* time */}
                               <div className={cn("mt-1", "text-xs")} style={{ color: ORANGE }}>
                                 {n.timeKey ? t(n.timeKey, { ns: "common" }) : n.time}
                               </div>
@@ -320,7 +270,6 @@ export default function LayoutUser() {
                       </div>
                     )}
 
-                    {/* Actions */}
                     <button
                       type="button"
                       onClick={() => {
@@ -329,11 +278,7 @@ export default function LayoutUser() {
                         navigate("/user/notifications");
                       }}
                       className="mt-3 w-full rounded-full px-3 py-2 text-sm font-bold"
-                      style={{
-                        color: ORANGE,
-                        border: `1px solid ${ORANGE}55`,
-                        background: "white",
-                      }}
+                      style={{ color: ORANGE, border: `1px solid ${ORANGE}55`, background: "white" }}
                     >
                       {t("notifications.viewAll", { ns: "common" })}
                     </button>
@@ -370,12 +315,9 @@ export default function LayoutUser() {
               onClick={toggleLang}
             >
               <Globe className="h-6 w-6" style={{ color: ORANGE }} />
-              <span className="text-sm font-bold text-[#F16323]">
-                {currentLng.toUpperCase()}
-              </span>
+              <span className="text-sm font-bold text-[#F16323]">{currentLng.toUpperCase()}</span>
             </button>
 
-            {/* ===== User Dropdown ===== */}
             <div className="relative" ref={profileWrapRef}>
               <button
                 type="button"
@@ -393,23 +335,15 @@ export default function LayoutUser() {
               {profileOpen && (
                 <div
                   className="absolute right-0 top-full mt-3 w-[230px] z-50 overflow-hidden rounded-[18px] bg-[#F16323]"
-                  style={{
-                    boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
-                    padding: "14px 18px 10px",
-                  }}
+                  style={{ boxShadow: "0 18px 34px rgba(0,0,0,0.18)", padding: "14px 18px 10px" }}
                 >
-                  {/* Header with user info */}
                   <div className="flex items-start gap-3">
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#F16323] flex-shrink-0">
                       <User className="h-5 w-5" />
                     </span>
                     <div className="min-w-0">
-                      <div className="text-base font-bold text-white leading-tight truncate">
-                        {displayName}
-                      </div>
-                      <div className="text-xs font-normal text-white/90 leading-tight mt-1 truncate">
-                        {emailText}
-                      </div>
+                      <div className="text-base font-bold text-white leading-tight truncate">{displayName}</div>
+                      <div className="text-xs font-normal text-white/90 leading-tight mt-1 truncate">{emailText}</div>
                     </div>
                   </div>
 
@@ -464,7 +398,6 @@ export default function LayoutUser() {
         <div className="h-px w-full bg-black/10" />
       </header>
 
-      {/* Page content */}
       <div className="mx-auto max-w-7xl px-6 py-8">
         <Outlet />
       </div>

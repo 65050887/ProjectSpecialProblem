@@ -1,3 +1,4 @@
+// server\server.js
 require("dotenv").config();
 
 // Step 1 : import ต่างๆ ที่จำเป็นต้องใช้

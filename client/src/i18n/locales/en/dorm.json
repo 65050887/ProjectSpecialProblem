@@ -1,18 +1,6 @@
 {
-  "fields": {
-    "price": "Price",
-    "electric": "Electric",
-    "water": "Water",
-    "internet": "Internet",
-    "facilities": "Facilities",
-    "distance": "Distance",
-    "dormType": "Dorm type"
-  },
-  "values": {
-    "free": "Free",
-    "none": "—",
-    "onlyFemale": "Only Female",
-    "onlyMale": "Only Male",
-    "mixed": "Mixed Dormitory"
-  }
+  "distanceKm": "{{value}} km",
+  "noReviews": "No reviews yet",
+  "notFound": "No dormitories found",
+  "loading": "Loading dormitories..."
 }

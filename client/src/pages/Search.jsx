@@ -1,6 +1,7 @@
 // client/src/pages/Search.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Search as SearchIcon,
   SlidersHorizontal,
@@ -52,17 +53,35 @@ function inferZoneFromAddress(addr = "") {
   return "Chalongkrung 1";
 }
 
-function formatMoney(n) {
+function formatMoney(n, locale = "th-TH") {
   const num = Number(n);
   if (!Number.isFinite(num)) return "-";
-  return num.toLocaleString("th-TH");
+  return num.toLocaleString(locale);
 }
 
-function formatKm(distance_m) {
+// ✅ format price range: "4,000 - 5,000" หรือ "4,000+"
+function formatPriceRange(min, max, locale = "th-TH") {
+  const a = Number(min);
+  const b = Number(max);
+
+  const hasA = Number.isFinite(a);
+  const hasB = Number.isFinite(b);
+
+  if (hasA && hasB) {
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    return `${lo.toLocaleString(locale)} - ${hi.toLocaleString(locale)}`;
+  }
+  if (hasA) return `${a.toLocaleString(locale)}+`;
+  if (hasB) return `${b.toLocaleString(locale)}+`;
+  return "-";
+}
+
+function formatDistance(distance_m, t) {
   const n = Number(distance_m);
   if (!Number.isFinite(n)) return "-";
-  if (n < 1000) return `${n} m`;
-  return `${(n / 1000).toFixed(1)} km`;
+  if (n < 1000) return t("search.units.m", { ns: "common", value: Math.round(n) });
+  return t("search.units.km", { ns: "common", value: (n / 1000).toFixed(1) });
 }
 
 /** ---- Google Drive helpers ---- */
@@ -208,7 +227,9 @@ function ZonePill({ active, children, onClick }) {
 
 /** ---------- Toast ---------- */
 function Toast({ open, message, onClose }) {
+  const { t } = useTranslation(["common"]);
   if (!open) return null;
+
   return (
     <div className="fixed left-1/2 top-10 z-[999] w-[92%] max-w-[860px] -translate-x-1/2">
       <div className="relative overflow-hidden rounded-[28px] border border-[#F16323]/30 bg-white shadow-[0_18px_34px_rgba(0,0,0,0.20)]">
@@ -216,7 +237,7 @@ function Toast({ open, message, onClose }) {
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5"
-          aria-label="close toast"
+          aria-label={t("actions.close", { ns: "common" })}
         >
           <X className="h-5 w-5 text-[#F16323]" />
         </button>
@@ -234,13 +255,17 @@ function Toast({ open, message, onClose }) {
 
 /** ---------- CompareBar (bottom fixed) ---------- */
 function CompareBar({ count, onClear, onSee }) {
+  const { t } = useTranslation(["common"]);
   if (!count) return null;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[998]">
       <div className="bg-[#F16323]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-6 md:px-10">
           <div className="flex items-center gap-5 text-white">
-            <div className="text-[22px] font-extrabold">Compare Dormitory</div>
+            <div className="text-[22px] font-extrabold">
+              {t("search.compareBar.title", { ns: "common" })}
+            </div>
             <div className="inline-flex h-12 items-center justify-center rounded-full bg-white px-10 text-[20px] font-extrabold text-[#F16323]">
               {count}/{COMPARE_MAX}
             </div>
@@ -253,7 +278,7 @@ function CompareBar({ count, onClear, onSee }) {
               className="inline-flex items-center gap-3 text-[20px] font-semibold text-white hover:opacity-95"
             >
               <RotateCcw className="h-6 w-6" />
-              Clear
+              {t("search.compareBar.clear", { ns: "common" })}
             </button>
 
             <button
@@ -261,7 +286,7 @@ function CompareBar({ count, onClear, onSee }) {
               onClick={onSee}
               className="inline-flex h-14 items-center justify-center rounded-2xl bg-white px-10 text-[20px] font-semibold text-[#F16323] shadow hover:opacity-95"
             >
-              See Compare
+              {t("search.compareBar.seeCompare", { ns: "common" })}
             </button>
           </div>
         </div>
@@ -271,7 +296,8 @@ function CompareBar({ count, onClear, onSee }) {
 }
 
 /** ---------- DormCard ---------- */
-function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
+function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare, numberLocale }) {
+  const { t } = useTranslation(["common"]);
   const CARD_W = 373;
   const CARD_H = 600;
   const IMG_H = 289;
@@ -292,6 +318,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
 
   const priceMin = dorm?.priceMin ?? null;
   const priceMax = dorm?.priceMax ?? null;
+  const priceText = formatPriceRange(priceMin, priceMax, numberLocale);
 
   const avg = Number(dorm?.rating ?? 0);
   const reviewCount = Number(dorm?.reviews ?? 0);
@@ -310,7 +337,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
       >
         <img
           src={imgSrc}
-          alt={dorm?.name || "dorm"}
+          alt={dorm?.name || t("search.dorm.alt", { ns: "common" })}
           className="h-full w-full object-cover"
           referrerPolicy="no-referrer"
           loading="lazy"
@@ -321,7 +348,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
         {dorm?.verified && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-2 text-[14px] font-extrabold text-white shadow">
             <BadgeCheck className="h-5 w-5" />
-            verify
+            {t("search.dorm.verified", { ns: "common" })}
           </span>
         )}
 
@@ -329,7 +356,8 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#F16323] text-white shadow hover:opacity-90"
-            aria-label="favorite"
+            aria-label={t("search.dorm.favorite", { ns: "common" })}
+            title={t("search.dorm.favorite", { ns: "common" })}
           >
             <Heart className="h-5 w-5" />
           </button>
@@ -344,7 +372,8 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#F16323] text-white shadow hover:opacity-90"
-            aria-label="comment"
+            aria-label={t("search.dorm.comment", { ns: "common" })}
+            title={t("search.dorm.comment", { ns: "common" })}
           >
             <MessageCircle className="h-5 w-5" />
           </button>
@@ -356,8 +385,12 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
               "inline-flex h-10 w-10 items-center justify-center rounded-full shadow hover:opacity-90",
               compared ? "bg-white text-[#F16323] border border-[#F16323]" : "bg-[#F16323] text-white"
             )}
-            aria-label="compare"
-            title={compared ? "Added to compare" : "Add to compare"}
+            aria-label={t("search.dorm.compare", { ns: "common" })}
+            title={
+              compared
+                ? t("search.dorm.compareAdded", { ns: "common" })
+                : t("search.dorm.compareAdd", { ns: "common" })
+            }
           >
             <GitCompare className="h-5 w-5" />
           </button>
@@ -371,37 +404,43 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
 
         <div className="mt-2 flex items-center gap-2 text-[#F16323]">
           <MapPin className="h-4 w-4" />
-          <span className="text-[16px] font-bold">distance {dorm?.distanceText} from kmitl</span>
+          <span className="text-[16px] font-bold">
+            {t("search.dorm.distanceFromKmitl", { ns: "common", value: dorm?.distanceText })}
+          </span>
         </div>
 
         <div className="mt-2 flex items-center gap-2 text-[#F16323]">
           <Users className="h-4 w-4" />
           <span className="text-[16px] font-bold">
-            {dorm?.availableRooms}/{dorm?.totalRooms} Available
+            {t("search.dorm.availableRooms", {
+              ns: "common",
+              available: dorm?.availableRooms ?? 0,
+              total: dorm?.totalRooms ?? 0,
+            })}
           </span>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {amenities.map((a, idx) => {
-            const Icon = amenityIcon(a);
-            return (
-              <span
-                key={`${a}-${idx}`}
-                className="inline-flex items-center gap-2 rounded-full bg-yellow-300 px-3 py-1 text-[12px] font-extrabold text-[#F16323]"
-              >
-                {Icon ? <Icon className="h-4 w-4" /> : null}
-                {a}
-              </span>
-            );
-          })}
-          {!amenities.length ? (
-            <span className="text-[14px] font-semibold text-black/40">—</span>
-          ) : null}
-        </div>
+        {/* ✅ amenities: ถ้าว่างให้ "ไม่แสดงอะไร" (เอาขีด — ที่อยู่เหนือราคาออกตามที่ขอ) */}
+        {amenities.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {amenities.map((a, idx) => {
+              const Icon = amenityIcon(a);
+              return (
+                <span
+                  key={`${a}-${idx}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-yellow-300 px-3 py-1 text-[12px] font-extrabold text-[#F16323]"
+                >
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
+                  {a}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         <div className="mt-3 flex items-end justify-between gap-3">
           <div className="text-[16px] font-bold text-[#F16323]">
-            ฿ {formatMoney(priceMin)} {priceMax != null ? `- ${formatMoney(priceMax)}` : ""} / Month
+            {t("search.dorm.pricePerMonth", { ns: "common", value: priceText })}
           </div>
 
           <div className="flex items-center gap-2 text-[#F16323]">
@@ -416,13 +455,13 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
           {hasAir && (
             <span className="inline-flex items-center gap-2 rounded-full border border-yellow-300 px-3 py-1 text-[14px] font-extrabold text-[#F16323]">
               <Wind className="h-4 w-4" />
-              Air
+              {t("search.dorm.air", { ns: "common" })}
             </span>
           )}
           {hasFan && (
             <span className="inline-flex items-center gap-2 rounded-full border border-yellow-300 px-3 py-1 text-[14px] font-extrabold text-[#F16323]">
               <Fan className="h-4 w-4" />
-              Fan
+              {t("search.dorm.fan", { ns: "common" })}
             </span>
           )}
         </div>
@@ -431,13 +470,23 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
           {hasFan && (
             <div className="flex items-center gap-2">
               <Fan className="h-5 w-5" />
-              <span>Fan : ฿ {fanMin != null ? formatMoney(fanMin) : "-"}+</span>
+              <span>
+                {t("search.dorm.fanPrice", {
+                  ns: "common",
+                  value: fanMin != null ? formatMoney(fanMin, numberLocale) : "-",
+                })}
+              </span>
             </div>
           )}
           {hasAir && (
             <div className="flex items-center gap-2">
               <Wind className="h-5 w-5" />
-              <span>Air : ฿ {airMin != null ? formatMoney(airMin) : "-"}+</span>
+              <span>
+                {t("search.dorm.airPrice", {
+                  ns: "common",
+                  value: airMin != null ? formatMoney(airMin, numberLocale) : "-",
+                })}
+              </span>
             </div>
           )}
         </div>
@@ -449,7 +498,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
             onClick={onSeeDetails}
           >
             <Eye className="h-4 w-4" />
-            See Details
+            {t("search.actions.seeDetails", { ns: "common" })}
           </button>
 
           <button
@@ -458,7 +507,7 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
             onClick={onContact}
           >
             <Phone className="h-4 w-4" />
-            Contact
+            {t("search.actions.contact", { ns: "common" })}
           </button>
         </div>
       </div>
@@ -470,6 +519,10 @@ function DormCard({ dorm, compared, onSeeDetails, onContact, onCompare }) {
 export default function Search() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t, i18n } = useTranslation(["common"]);
+
+  const isEn = String(i18n.language || "th").toLowerCase().startsWith("en");
+  const numberLocale = isEn ? "en-US" : "th-TH";
 
   const [zone, setZone] = useState("All");
   const [q, setQ] = useState("");
@@ -499,12 +552,28 @@ export default function Search() {
     window.__dc_toast = window.setTimeout(() => setToast({ open: false, text: "" }), 1400);
   };
 
-  // ✅ sync params from URL (Home -> Search) ครบทุก category
+  // ✅ zone label TH/EN ตามที่ขอ
+  const zoneLabel = (z) => {
+    if (z === "All") return t("search.zones.all", { ns: "common" });
+
+    const map = {
+      "Chalongkrung 1": { th: "โซนฉลองกรุง 1", en: "Zone Chalongkrung 1" },
+      FBT: { th: "โซน FBT", en: "Zone FBT" },
+      Nikom: { th: "โซนนิคม", en: "Zone Nikom" },
+      Jinda: { th: "โซนจินดา", en: "Zone Jinda" },
+    };
+
+    const item = map[z];
+    if (!item) return z;
+
+    return isEn ? item.en : item.th;
+  };
+
+  // ✅ sync params from URL (Home -> Search)
   useEffect(() => {
     const qParam = (searchParams.get("q") || "").trim();
     const zoneParam = (searchParams.get("zone") || "").trim();
 
-    // Location: distanceMax (meters) -> filters.distance (km)
     const distanceMax = (searchParams.get("distanceMax") || "").trim();
     const distanceKm =
       distanceMax === "500"
@@ -521,17 +590,16 @@ export default function Search() {
         ? "5"
         : "";
 
-    // Prices
     const priceMin = (searchParams.get("priceMin") || "").trim();
     const priceMax = (searchParams.get("priceMax") || "").trim();
 
-    // Facilities
     const petFriendly = (searchParams.get("petFriendly") || "").trim();
     const amenitiesAll = searchParams.getAll("amenities");
     const amenitiesRaw =
-      amenitiesAll.length > 0 ? amenitiesAll.join(",") : (searchParams.get("amenities") || "").trim();
+      amenitiesAll.length > 0
+        ? amenitiesAll.join(",")
+        : (searchParams.get("amenities") || "").trim();
 
-    // Dormitory Type
     const dormitoryType = (searchParams.get("dormitoryType") || "").trim();
     const genderParam = (searchParams.get("gender") || "").trim();
 
@@ -544,7 +612,6 @@ export default function Search() {
       const next = { ...FILTER_DEFAULT };
 
       if (distanceKm) next.distance = distanceKm;
-
       if (priceMin) next.priceMin = priceMin;
       if (priceMax) next.priceMax = priceMax;
 
@@ -574,12 +641,12 @@ export default function Search() {
       const next = current.filter((x) => String(x?.id) !== String(d.id));
       writeCompare(next);
       setCompareList(next);
-      showToast("Remove Dormitory Compare Success");
+      showToast(t("search.toast.removeCompareSuccess", { ns: "common" }));
       return;
     }
 
     if (current.length >= COMPARE_MAX) {
-      showToast(`Compare is full (${COMPARE_MAX}/${COMPARE_MAX})`);
+      showToast(t("search.toast.compareFull", { ns: "common", max: COMPARE_MAX }));
       return;
     }
 
@@ -608,13 +675,13 @@ export default function Search() {
     const next = [...current, item];
     writeCompare(next);
     setCompareList(next);
-    showToast("Add Dormitory Compare Success");
+    showToast(t("search.toast.addCompareSuccess", { ns: "common" }));
   };
 
   const clearCompare = () => {
     writeCompare([]);
     setCompareList([]);
-    showToast("Clear Compare Success");
+    showToast(t("search.toast.clearCompareSuccess", { ns: "common" }));
   };
 
   const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -638,13 +705,15 @@ export default function Search() {
 
         if (!resp.ok) {
           setDorms([]);
-          setErrMsg(data?.message || "Fetch failed");
+          setErrMsg(data?.message || t("search.error.fetchFailed", { ns: "common" }));
           return;
         }
 
         const mapped = (data?.dorms || []).map((d, idx) => {
-          const priceMin = d.price_min ?? d.min_price_per_month ?? d.min_price ?? d.priceMin ?? null;
-          const priceMax = d.price_max ?? d.max_price_per_month ?? d.max_price ?? d.priceMax ?? null;
+          const priceMin =
+            d.price_min ?? d.min_price_per_month ?? d.min_price ?? d.priceMin ?? null;
+          const priceMax =
+            d.price_max ?? d.max_price_per_month ?? d.max_price ?? d.priceMax ?? null;
 
           const distM = d.distance_m ?? d.distance ?? null;
           const availableRooms = d.available_rooms ?? d.rooms_available ?? d.availableRooms ?? 0;
@@ -675,11 +744,7 @@ export default function Search() {
             zoneTextRaw && typeof zoneTextRaw === "string"
               ? (() => {
                   const z = zoneTextRaw.toLowerCase();
-                  if (
-                    z.includes("ฉลองกรุง 1") ||
-                    z.includes("chalong") ||
-                    z.includes("chalongkrung")
-                  )
+                  if (z.includes("ฉลองกรุง 1") || z.includes("chalong") || z.includes("chalongkrung"))
                     return "Chalongkrung 1";
                   if (z.includes("fbt")) return "FBT";
                   if (z.includes("นิคม") || z.includes("nikom")) return "Nikom";
@@ -699,14 +764,15 @@ export default function Search() {
           return {
             id,
             zone: zoneMapped,
-            name: d.dorm_name_th || d.dorm_name_en || "-",
+            name:
+              (isEn ? d.dorm_name_en || d.dorm_name_th : d.dorm_name_th || d.dorm_name_en) || "-",
             rating: Number(rating) || 0,
             reviews: Number(reviews) || 0,
             priceMin: priceMin != null ? Number(priceMin) : null,
             priceMax: priceMax != null ? Number(priceMax) : null,
             verified,
             distance_m: distM != null ? Number(distM) : null,
-            distanceText: formatKm(distM),
+            distanceText: formatDistance(distM, t),
             availableRooms: Number(availableRooms) || 0,
             totalRooms: Number(totalRooms) || 0,
             amenities,
@@ -719,18 +785,18 @@ export default function Search() {
       } catch (e) {
         if (e?.name === "AbortError") return;
         setDorms([]);
-        setErrMsg("Server error / CORS / API URL not correct");
+        setErrMsg(t("search.error.server", { ns: "common" }));
       } finally {
         setLoading(false);
       }
     };
 
-    const t = setTimeout(run, 250);
+    const tt = setTimeout(run, 250);
     return () => {
-      clearTimeout(t);
+      clearTimeout(tt);
       controller.abort();
     };
-  }, [q, API]);
+  }, [q, API, t, isEn]);
 
   // apply filters
   const filtered = useMemo(() => {
@@ -741,7 +807,6 @@ export default function Search() {
     const hasPriceMin = String(f.priceMin || "").trim() !== "" && Number.isFinite(priceMinF);
     const hasPriceMax = String(f.priceMax || "").trim() !== "" && Number.isFinite(priceMaxF);
 
-    // ✅ Location: distance filter (km -> meters)
     const distKm = Number(String(f.distance || "").trim());
     const hasDist = String(f.distance || "").trim() !== "" && Number.isFinite(distKm);
     const maxM = hasDist ? distKm * 1000 : null;
@@ -751,14 +816,12 @@ export default function Search() {
       .filter((d) => {
         if (f.verifiedOnly && !d.verified) return false;
 
-        // ✅ Location
         if (hasDist) {
           const dm = Number(d.distance_m ?? d.raw?.distance_m ?? null);
           if (!Number.isFinite(dm)) return false;
           if (dm > maxM) return false;
         }
 
-        // ✅ Prices
         if (hasPriceMin) {
           const base = Number(d.priceMin ?? d.priceMax ?? 0);
           if (!Number.isFinite(base) || base < priceMinF) return false;
@@ -772,7 +835,6 @@ export default function Search() {
         if (f.hasAir && !hasAir) return false;
         if (f.hasFan && !hasFan) return false;
 
-        // ✅ Facilities: amenities
         if (Array.isArray(f.amenities) && f.amenities.length) {
           const setA = new Set((d.amenities || []).map((x) => String(x).toLowerCase()));
           for (const a of f.amenities) {
@@ -780,7 +842,6 @@ export default function Search() {
           }
         }
 
-        // ✅ Dormitory Type (gender policy)
         if (f.gender && f.gender !== "any") {
           const gp = String(d.raw?.gender_policy || "").toLowerCase();
           if (f.gender === "male" && !gp.includes("male")) return false;
@@ -788,7 +849,6 @@ export default function Search() {
           if (f.gender === "mix" && !gp.includes("mix")) return false;
         }
 
-        // ✅ Facilities: pet friendly
         if (f.petFriendly) {
           const pet = String(d.raw?.pet_friendly ?? d.raw?.petFriendly ?? "").toLowerCase();
           if (!(pet === "true" || pet === "1" || pet.includes("yes") || pet.includes("allow")))
@@ -824,9 +884,11 @@ export default function Search() {
             <div className="flex items-start justify-between gap-6 pt-10">
               <div>
                 <div className="text-[20px] font-semibold tracking-tight text-[#F16323]">
-                  Find Your Perfect Dormitory
+                  {t("search.header.title", { ns: "common" })}
                 </div>
-                <div className="mt-2 text-[16px] text-[#F16323]/80">Find the right dormitory for you</div>
+                <div className="mt-2 text-[16px] text-[#F16323]/80">
+                  {t("search.header.subtitle", { ns: "common" })}
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -836,7 +898,7 @@ export default function Search() {
                   className="inline-flex h-12 items-center gap-3 rounded-xl bg-[#F16323] px-5 text-[16px] font-regular text-white shadow-[0_10px_18px_rgba(241,99,35,0.25)] hover:opacity-95"
                 >
                   <GitCompare className="h-5 w-5" />
-                  compare
+                  {t("search.header.compare", { ns: "common" })}
                 </button>
 
                 <div className="flex h-12 overflow-hidden rounded-xl border border-[#F16323]">
@@ -847,7 +909,8 @@ export default function Search() {
                       "inline-flex w-14 items-center justify-center",
                       view === "grid" ? "bg-[#F16323] text-white" : "bg-white text-[#F16323]"
                     )}
-                    aria-label="grid"
+                    aria-label={t("search.view.grid", { ns: "common" })}
+                    title={t("search.view.grid", { ns: "common" })}
                   >
                     <LayoutGrid className="h-5 w-5" />
                   </button>
@@ -858,7 +921,8 @@ export default function Search() {
                       "inline-flex w-14 items-center justify-center",
                       view === "list" ? "bg-[#F16323] text-white" : "bg-white text-[#F16323]"
                     )}
-                    aria-label="list"
+                    aria-label={t("search.view.list", { ns: "common" })}
+                    title={t("search.view.list", { ns: "common" })}
                   >
                     <List className="h-5 w-5" />
                   </button>
@@ -871,7 +935,7 @@ export default function Search() {
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search Name Dormitory, Zone dormitory ..."
+                  placeholder={t("search.header.searchPlaceholder", { ns: "common" })}
                   className="ml-4 h-full w-full bg-transparent text-[16px] font-medium text-[#F16323] outline-none placeholder:text-black/35"
                 />
                 <SearchIcon className="h-6 w-6 flex-shrink-0 text-[#F16323]" />
@@ -883,12 +947,16 @@ export default function Search() {
                 className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-[#F16323] px-10 text-[18px] font-medium text-[#F16323] hover:bg-[#F16323]/10 md:w-auto"
               >
                 <SlidersHorizontal className="h-6 w-6" />
-                {filtersOpen ? " Filters" : "Filters"}
+                {filtersOpen
+                  ? t("search.header.filtersOpen", { ns: "common" })
+                  : t("search.header.filters", { ns: "common" })}
               </button>
             </div>
 
             <div className="mt-4 text-[12px]">
-              {loading && <span className="text-black/50">Loading...</span>}
+              {loading && (
+                <span className="text-black/50">{t("search.status.loading", { ns: "common" })}</span>
+              )}
               {!loading && errMsg && <span className="text-red-500">{errMsg}</span>}
             </div>
           </div>
@@ -896,17 +964,19 @@ export default function Search() {
           <div className="mt-10 flex flex-col gap-10 lg:flex-row">
             <aside className={cn("w-full lg:w-[420px]", filtersOpen ? "block" : "hidden")}>
               <div className="lg:sticky lg:top-24">
-                <FilterPanel value={filters} onChange={setFilters} onClearAll={clearAllFilters} />
+                <FilterPanel values={filters} onChange={setFilters} onClear={clearAllFilters} />
               </div>
             </aside>
 
             <main className="flex-1">
               <div className="flex flex-wrap items-center gap-5">
-                <div className="text-[16px] font-bold text-[#F16323]">Filter by Zone :</div>
+                <div className="text-[16px] font-bold text-[#F16323]">
+                  {t("search.zoneFilter.label", { ns: "common" })}
+                </div>
                 <div className="flex flex-wrap gap-4">
                   {ZONES.map((z) => (
                     <ZonePill key={z} active={zone === z} onClick={() => setZone(z)}>
-                      {z}
+                      {zoneLabel(z)}
                     </ZonePill>
                   ))}
                 </div>
@@ -920,7 +990,10 @@ export default function Search() {
                         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#F16323]/10">
                           <MapPin className="h-5 w-5" style={{ color: ORANGE }} />
                         </span>
-                        <h2 className="text-[20px] font-extrabold text-[#F16323]">Zone {z}</h2>
+                        {/* ✅ หัวข้อโซนแสดง TH/EN ตาม mapping */}
+                        <h2 className="text-[20px] font-extrabold text-[#F16323]">
+                          {zoneLabel(z)}
+                        </h2>
                       </div>
                     </div>
 
@@ -939,85 +1012,97 @@ export default function Search() {
                             onCompare={() => addToCompare(d)}
                             onSeeDetails={() => navigate(`/dorm/${d.id}`)}
                             onContact={() => navigate(`/dorm/${d.id}?tab=contact`)}
+                            numberLocale={numberLocale}
                           />
                         ))}
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {(grouped[z] || []).map((d) => (
-                          <div
-                            key={d.id}
-                            className="flex flex-col gap-4 rounded-2xl border border-[#F16323] bg-white p-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:flex-row"
-                          >
-                            <img
-                              src={toDriveThumbnail(d.image) || FALLBACK_IMG}
-                              alt={d.name}
-                              className="h-44 w-full rounded-xl object-cover md:w-72"
-                              referrerPolicy="no-referrer"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => (e.currentTarget.src = FALLBACK_IMG)}
-                            />
+                        {(grouped[z] || []).map((d) => {
+                          const listPriceText = formatPriceRange(d.priceMin, d.priceMax, numberLocale);
+                          return (
+                            <div
+                              key={d.id}
+                              className="flex flex-col gap-4 rounded-2xl border border-[#F16323] bg-white p-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:flex-row"
+                            >
+                              <img
+                                src={toDriveThumbnail(d.image) || FALLBACK_IMG}
+                                alt={d.name}
+                                className="h-44 w-full rounded-xl object-cover md:w-72"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => (e.currentTarget.src = FALLBACK_IMG)}
+                              />
 
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between gap-4">
-                                <div>
-                                  <div className="text-[18px] font-extrabold text-[#F16323]">{d.name}</div>
-                                  <div className="mt-1 text-[14px] font-bold text-[#F16323]">
-                                    distance {d.distanceText} from kmitl
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <div className="text-[18px] font-extrabold text-[#F16323]">
+                                      {d.name}
+                                    </div>
+                                    <div className="mt-1 text-[14px] font-bold text-[#F16323]">
+                                      {t("search.dorm.distanceFromKmitl", {
+                                        ns: "common",
+                                        value: d.distanceText,
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => addToCompare(d)}
+                                      className={cn(
+                                        "inline-flex h-10 w-10 items-center justify-center rounded-full shadow hover:opacity-90",
+                                        compareIds.has(String(d.id))
+                                          ? "bg-white text-[#F16323] border border-[#F16323]"
+                                          : "bg-[#F16323] text-white"
+                                      )}
+                                      title={t("search.dorm.compare", { ns: "common" })}
+                                      aria-label={t("search.dorm.compare", { ns: "common" })}
+                                    >
+                                      <GitCompare className="h-5 w-5" />
+                                    </button>
+
+                                    <div className="flex items-center gap-2 rounded-full bg-[#F16323] px-3 py-1.5 text-[14px] font-bold text-white">
+                                      <Star className="h-4 w-4 fill-white" />
+                                      {d.rating.toFixed(1)}
+                                    </div>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => addToCompare(d)}
-                                    className={cn(
-                                      "inline-flex h-10 w-10 items-center justify-center rounded-full shadow hover:opacity-90",
-                                      compareIds.has(String(d.id))
-                                        ? "bg-white text-[#F16323] border border-[#F16323]"
-                                        : "bg-[#F16323] text-white"
-                                    )}
-                                    title="Compare"
-                                  >
-                                    <GitCompare className="h-5 w-5" />
-                                  </button>
-
-                                  <div className="flex items-center gap-2 rounded-full bg-[#F16323] px-3 py-1.5 text-[14px] font-bold text-white">
-                                    <Star className="h-4 w-4 fill-white" />
-                                    {d.rating.toFixed(1)}
+                                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                                  <div className="text-[16px] font-bold text-[#F16323]">
+                                    {t("search.dorm.pricePerMonth", {
+                                      ns: "common",
+                                      value: listPriceText,
+                                    })}
                                   </div>
-                                </div>
-                              </div>
 
-                              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                                <div className="text-[16px] font-bold text-[#F16323]">
-                                  ฿ {formatMoney(d.priceMin)}{" "}
-                                  {d.priceMax != null ? `- ${formatMoney(d.priceMax)}` : ""} / Month
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#F16323] px-5 text-[14px] font-bold text-white hover:opacity-90"
-                                    onClick={() => navigate(`/dorm/${d.id}`)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    See Details
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full border-2 border-[#F16323] px-5 text-[14px] font-bold text-[#F16323] hover:bg-[#F16323]/10"
-                                    onClick={() => navigate(`/dorm/${d.id}?tab=contact`)}
-                                  >
-                                    <Phone className="h-4 w-4" />
-                                    Contact
-                                  </button>
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#F16323] px-5 text-[14px] font-bold text-white hover:opacity-90"
+                                      onClick={() => navigate(`/dorm/${d.id}`)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      {t("search.actions.seeDetails", { ns: "common" })}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full border-2 border-[#F16323] px-5 text-[14px] font-bold text-[#F16323] hover:bg-[#F16323]/10"
+                                      onClick={() => navigate(`/dorm/${d.id}?tab=contact`)}
+                                    >
+                                      <Phone className="h-4 w-4" />
+                                      {t("search.actions.contact", { ns: "common" })}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </section>
@@ -1025,7 +1110,7 @@ export default function Search() {
 
                 {!loading && !errMsg && filtered.length === 0 && (
                   <div className="rounded-xl border border-black/10 p-6 text-center text-[12px] text-black/50">
-                    ไม่พบหอพักที่ตรงกับฟิลเตอร์/คำค้น
+                    {t("search.empty", { ns: "common" })}
                   </div>
                 )}
               </div>

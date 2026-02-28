@@ -39,5 +39,147 @@
     "overview": "ภาพรวม",
     "dashboard": "แดชบอร์ด",
     "profile": "โปรไฟล์"
+  },
+  "home": {
+    "hero": {
+      "badge": "ค้นหาหอพักที่ใช่ ไกลบ้านก็เหมือนอยู่บ้าน",
+      "title1": "ค้นพบ",
+      "title2": "หอพักรอบ KMITL",
+      "title3": "ที่เหมาะกับคุณ",
+      "desc": "ค้นหาหอพักรอบ KMITL พร้อมข้อมูล รูปภาพ และสถานะห้องว่าง เพื่อให้คุณเจอที่พักที่เหมาะที่สุดตลอดช่วงเรียน",
+      "avgRating": "คะแนนเฉลี่ย",
+      "studentsLivingLine1": "คนที่พักอาศัย",
+      "studentsLivingLine2": "ในหอพัก"
+    },
+    "searchPlaceholder": "ค้นหาหอพัก...",
+    "searchButton": "ค้นหา",
+    "dorm": { "alt": "หอพัก" },
+
+    "stats": {
+      "totalDormitory": "จำนวนหอพักทั้งหมด",
+      "totalCapacity": "ความจุทั้งหมด",
+      "totalRooms": "จำนวนห้องทั้งหมด"
+    },
+
+    "loadingDorms": "กำลังโหลดหอพัก...",
+    "noDorms": "ไม่พบหอพัก",
+    "noDormsHint": "ลองใหม่อีกครั้ง หรือปรับเงื่อนไขการค้นหา",
+
+    "all": "ทั้งหมด",
+    "verified": "ยืนยันแล้ว",
+    "distanceFromKmitl": "ระยะทาง {{value}} จาก KMITL",
+    "reviewCount": "({{value}} รีวิว)",
+    "priceRangePerMonth": "{{min}} - {{max}} / เดือน",
+    "seeAllDorms": "ดูหอพักทั้งหมด",
+    "zoneNoData": "ไม่มีข้อมูลหอพักในโซน {{zone}}",
+
+    "units": {
+      "km": "{{value}} กม.",
+      "m": "{{value}} ม."
+    },
+
+    "categoryTitle": "ค้นหาตามหมวดหมู่",
+    "categorySubtitle": "เลือกวิธีค้นหาที่เหมาะกับคุณ",
+    "bahtPrefix": "฿ {{value}}",
+
+    "category": {
+      "location": {
+        "title": "ทำเลที่ตั้ง",
+        "subtitle": "ค้นหาตามระยะทางจาก KMITL",
+        "r500": "รัศมี 500 ม.",
+        "r1k": "รัศมี 1 กม.",
+        "r2k": "รัศมี 2 กม."
+      },
+      "prices": {
+        "title": "ราคา",
+        "subtitle": "เลือกช่วงราคาที่เหมาะสม",
+        "p1": "2800 - 3500",
+        "p2": "4000 - 5500",
+        "p3": "6000 ขึ้นไป"
+      },
+      "facilities": {
+        "title": "สิ่งอำนวยความสะดวก",
+        "subtitle": "ค้นหาตามสิ่งอำนวยความสะดวก",
+        "pet": "เลี้ยงสัตว์ได้",
+        "keycard": "คีย์การ์ด",
+        "gym": "ฟิตเนส"
+      },
+      "type": {
+        "title": "ประเภทหอพัก",
+        "subtitle": "ค้นหาตามประเภทหอ",
+        "male": "ชายล้วน",
+        "female": "หญิงล้วน",
+        "mix": "หอรวม"
+      }
+    },
+
+    "reviewTitle": "รีวิว",
+    "reviewSubtitle": "ประสบการณ์จากนักศึกษาที่ค้นหาหอพักกับเรา",
+    "noReviews": "ยังไม่มีรีวิว",
+    "noReviewsHint": "ถ้าเพิ่ม API รีวิวแล้ว จะสามารถแสดงรีวิวจริงตรงนี้ได้"
+  },
+  "search": {
+    "header": {
+      "title": "ค้นหาหอพักที่เหมาะกับคุณ",
+      "subtitle": "เลือกหอพักที่ใช่สำหรับคุณ",
+      "compare": "เปรียบเทียบ",
+      "searchPlaceholder": "ค้นหาชื่อหอพัก, โซน ...",
+      "filters": "ตัวกรอง",
+      "filtersOpen": "ตัวกรอง"
+    },
+    "view": {
+      "grid": "มุมมองแบบการ์ด",
+      "list": "มุมมองแบบรายการ"
+    },
+    "status": {
+      "loading": "กำลังโหลด..."
+    },
+    "zones": {
+      "all": "ทั้งหมด"
+    },
+    "zoneFilter": {
+      "label": "กรองตามโซน :"
+    },
+    "zoneTitle": "โซน {{zone}}",
+    "compareBar": {
+      "title": "เปรียบเทียบหอพัก",
+      "clear": "ล้าง",
+      "seeCompare": "ดูรายการเปรียบเทียบ"
+    },
+    "toast": {
+      "addCompareSuccess": "เพิ่มหอพักเพื่อเปรียบเทียบสำเร็จ",
+      "removeCompareSuccess": "นำหอพักออกจากการเปรียบเทียบสำเร็จ",
+      "clearCompareSuccess": "ล้างรายการเปรียบเทียบสำเร็จ",
+      "compareFull": "รายการเปรียบเทียบเต็มแล้ว ({{max}}/{{max}})"
+    },
+    "error": {
+      "fetchFailed": "ดึงข้อมูลไม่สำเร็จ",
+      "server": "เกิดปัญหาเซิร์ฟเวอร์ / CORS / ตั้งค่า API URL ไม่ถูกต้อง"
+    },
+    "empty": "ไม่พบหอพักที่ตรงกับฟิลเตอร์/คำค้น",
+    "units": {
+      "km": "{{value}} กม.",
+      "m": "{{value}} ม."
+    },
+    "actions": {
+      "seeDetails": "ดูรายละเอียด",
+      "contact": "ติดต่อ"
+    },
+    "dorm": {
+      "alt": "หอพัก",
+      "verified": "ยืนยันแล้ว",
+      "favorite": "รายการโปรด",
+      "comment": "ความคิดเห็น",
+      "compare": "เปรียบเทียบ",
+      "compareAdd": "เพิ่มเพื่อเปรียบเทียบ",
+      "compareAdded": "เพิ่มแล้ว",
+      "distanceFromKmitl": "ระยะทาง {{value}} จาก KMITL",
+      "availableRooms": "ว่าง {{available}}/{{total}} ห้อง",
+      "pricePerMonth": "฿ {{value}} / เดือน",
+      "air": "แอร์",
+      "fan": "พัดลม",
+      "fanPrice": "พัดลม : ฿ {{value}}+",
+      "airPrice": "แอร์ : ฿ {{value}}+"
+    }
   }
 }

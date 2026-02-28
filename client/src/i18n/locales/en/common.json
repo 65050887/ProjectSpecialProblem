@@ -39,5 +39,148 @@
     "overview": "Overview",
     "dashboard": "Dashboard",
     "profile": "Profile"
+  },
+  "home": {
+    "hero": {
+      "badge": "Find Your Dormitory Away From Home",
+      "title1": "Discover Your",
+      "title2": "Perfect KMITL",
+      "title3": "Dormitory",
+      "desc": "Search through dormitories around KMITL with detailed information, photos, and availability. Find the perfect place to call home during your studies.",
+      "avgRating": "Average Rating",
+      "studentsLivingLine1": "Students Living",
+      "studentsLivingLine2": "on Dormitory"
+    },
+    "searchPlaceholder": "Search dormitory...",
+    "searchButton": "Search",
+    "dorm": { "alt": "Dormitory" },
+
+    "stats": {
+      "totalDormitory": "Total Dormitory",
+      "totalCapacity": "Total Capacity",
+      "totalRooms": "Total Rooms"
+    },
+
+    "loadingDorms": "Loading dormitories...",
+    "noDorms": "No dormitories found",
+    "noDormsHint": "Please try again later or adjust your search.",
+
+    "all": "All",
+    "verified": "Verified",
+    "distanceFromKmitl": "distance {{value}} from KMITL",
+    "reviewCount": "({{value}} Review)",
+    "priceRangePerMonth": "{{min}} - {{max}} / Month",
+    "seeAllDorms": "See all Dormitories",
+    "zoneNoData": "No dormitory data in {{zone}}",
+
+    "units": {
+      "km": "{{value}} km",
+      "m": "{{value}} m"
+    },
+
+    "categoryTitle": "Find by category",
+    "categorySubtitle": "Choose the search channel that best suits your needs",
+    "bahtPrefix": "฿ {{value}}",
+
+    "category": {
+      "location": {
+        "title": "Location",
+        "subtitle": "Find by distance from KMITL",
+        "r500": "Radius 500 m",
+        "r1k": "Radius 1 km",
+        "r2k": "Radius 2 km"
+      },
+      "prices": {
+        "title": "Prices",
+        "subtitle": "Select the right price",
+        "p1": "2800 - 3500",
+        "p2": "4000 - 5500",
+        "p3": "6000 up"
+      },
+      "facilities": {
+        "title": "Facilities",
+        "subtitle": "Find by facilities",
+        "pet": "Pet Friendly",
+        "keycard": "Key card",
+        "gym": "Gym"
+      },
+      "type": {
+        "title": "Dormitory Type",
+        "subtitle": "Find by dorm type",
+        "male": "Only Male",
+        "female": "Only Females",
+        "mix": "Co-Ed"
+      }
+    },
+
+    "reviewTitle": "Review",
+    "reviewSubtitle": "Experience from students who found dormitories with us",
+    "noReviews": "No reviews yet",
+    "noReviewsHint": "When you add a reviews API endpoint, we can show real reviews here."
+  },
+  "search": {
+    "header": {
+      "title": "Find Your Perfect Dormitory",
+      "subtitle": "Find the right dormitory for you",
+      "compare": "Compare",
+      "searchPlaceholder": "Search dorm name, zone ...",
+      "filters": "Filters",
+      "filtersOpen": "Filters"
+    },
+    "view": {
+      "grid": "Grid view",
+      "list": "List view"
+    },
+    "status": {
+      "loading": "Loading..."
+    },
+    "zones": {
+      "all": "All"
+    },
+    "zoneFilter": {
+      "label": "Filter by Zone :"
+    },
+    "zoneTitle": "Zone {{zone}}",
+    "compareBar": {
+      "title": "Compare Dormitory",
+      "clear": "Clear",
+      "seeCompare": "See Compare"
+    },
+    "toast": {
+      "addCompareSuccess": "Add dormitory to compare success",
+      "removeCompareSuccess": "Remove dormitory from compare success",
+      "clearCompareSuccess": "Clear compare success",
+      "compareFull": "Compare is full ({{max}}/{{max}})"
+    },
+    "error": {
+      "fetchFailed": "Fetch failed",
+      "server": "Server error / CORS / API URL not correct"
+    },
+    "empty": "No dormitories match your filters/search",
+    "units": {
+      "km": "{{value}} km",
+      "m": "{{value}} m"
+    },
+    "actions": {
+      "seeDetails": "See Details",
+      "contact": "Contact"
+    },
+    "dorm": {
+      "alt": "Dormitory",
+      "verified": "verified",
+      "favorite": "favorite",
+      "comment": "comment",
+      "compare": "compare",
+      "compareAdd": "Add to compare",
+      "compareAdded": "Added to compare",
+      "distanceFromKmitl": "distance {{value}} from KMITL",
+      "availableRooms": "{{available}}/{{total}} Available",
+      "pricePerMonth": "฿ {{value}} / Month",
+      "air": "Air",
+      "fan": "Fan",
+      "fanPrice": "Fan : ฿ {{value}}+",
+      "airPrice": "Air : ฿ {{value}}+"
+    }
   }
 }
+

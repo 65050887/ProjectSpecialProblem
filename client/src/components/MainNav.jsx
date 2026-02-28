@@ -1,4 +1,4 @@
-// client/src/components/MainNav.jsx
+// client\src\components\MainNav.jsx
 import React, { useMemo, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Home, Search, Users, Moon, Globe, User, Menu, X } from "lucide-react";
@@ -38,7 +38,6 @@ const MainNav = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-[0_4px_4px_rgba(0,0,0,0.08)]">
       <div className="mx-auto flex h-[90px] max-w-7xl items-center justify-between gap-6 px-4 md:px-10">
-        {/* LEFT: Logo + Brand */}
         <Link
           to="/"
           className="flex shrink-0 items-center gap-3"
@@ -57,7 +56,6 @@ const MainNav = () => {
           </span>
         </Link>
 
-        {/* CENTER: Menu (desktop) */}
         <nav className="hidden flex-1 items-center justify-center gap-4 md:flex">
           <NavLink to="/" className={navPill} end>
             <Home className="h-5 w-5" />
@@ -70,9 +68,7 @@ const MainNav = () => {
           </NavLink>
         </nav>
 
-        {/* RIGHT: actions */}
         <div className="flex items-center gap-3">
-          {/* theme */}
           <button
             type="button"
             className="hidden h-11 w-11 items-center justify-center rounded-full 10 text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
@@ -81,7 +77,6 @@ const MainNav = () => {
             <Moon className="h-6 w-6" />
           </button>
 
-          {/* language */}
           <button
             type="button"
             className="hidden items-center gap-2 rounded-full 10 px-4 py-2 font-bold text-[#F16323] hover:bg-[#F16323]/15 md:inline-flex"
@@ -92,7 +87,6 @@ const MainNav = () => {
             {currentLng.toUpperCase()}
           </button>
 
-          {/* login */}
           <Link
             to="/login"
             className="inline-flex items-center gap-2 rounded-[10px] bg-[#F16323] px-5 py-3 text-sm font-bold text-white hover:bg-[#d9551f]"
@@ -102,7 +96,6 @@ const MainNav = () => {
             {t("login", { ns: "auth" })}
           </Link>
 
-          {/* mobile menu button */}
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#F16323]/10 text-[#F16323] hover:bg-[#F16323]/15 md:hidden"
@@ -114,7 +107,6 @@ const MainNav = () => {
         </div>
       </div>
 
-      {/* MOBILE DROPDOWN */}
       {open && (
         <div className="md:hidden">
           <div className="mx-auto max-w-7xl px-4 pb-4">
@@ -138,14 +130,14 @@ const MainNav = () => {
                 {t("nav.searchDormitories", { ns: "common" })}
               </NavLink>
 
-              <NavLink
+              {/* <NavLink
                 to="/community"
                 className={mobileLink}
                 onClick={() => setOpen(false)}
               >
                 <Users className="h-5 w-5" />
                 {t("nav.community", { ns: "common" })}
-              </NavLink>
+              </NavLink> */}
 
               <div className="mt-2 flex items-center justify-between gap-2 px-2 pb-2">
                 <button

@@ -1,5 +1,6 @@
 // client/src/pages/Home.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   Search as SearchIcon,
@@ -20,17 +21,17 @@ const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80";
 
 /** ---------- helpers ---------- */
-function formatMoney(n) {
+function formatMoney(n, locale = "th-TH") {
   const num = Number(n);
   if (!Number.isFinite(num)) return "-";
-  return num.toLocaleString("th-TH");
+  return num.toLocaleString(locale);
 }
 
-function formatDistanceM(m) {
+function formatDistanceM(m, t) {
   const num = Number(m);
   if (!Number.isFinite(num)) return "-";
-  if (num >= 1000) return `${(num / 1000).toFixed(1)} km`;
-  return `${Math.round(num)} m`;
+  if (num >= 1000) return t("home.units.km", { value: (num / 1000).toFixed(1) });
+  return t("home.units.m", { value: Math.round(num) });
 }
 
 function inferZoneFromAddress(addr = "") {
@@ -125,12 +126,16 @@ function DriveImg({ url, alt, className, style, ...props }) {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(["common"]);
 
   // ✅ Home ใช้ base แบบไม่มี /api เพื่อเรียก /api/dorm/search
   const API_BASE =
     import.meta?.env?.VITE_API_URL?.replace(/\/?api\/?$/i, "") ||
     import.meta?.env?.VITE_API_BASE_URL ||
     "http://localhost:5000";
+
+  const isEn = String(i18n.language || "th").toLowerCase().startsWith("en");
+  const numberLocale = isEn ? "en-US" : "th-TH";
 
   const [q, setQ] = useState("");
   const [dorms, setDorms] = useState([]);
@@ -158,6 +163,13 @@ export default function Home() {
     navigate(`/dorm/${id}`);
   }
 
+  const pickDormName = (rawDorm) => {
+    const th = rawDorm?.dorm_name_th;
+    const en = rawDorm?.dorm_name_en;
+    const fallback = rawDorm?.dorm_name_th || rawDorm?.dorm_name_en || "-";
+    return isEn ? (en || th || fallback) : (th || en || fallback);
+  };
+
   useEffect(() => {
     let alive = true;
 
@@ -184,7 +196,7 @@ export default function Home() {
             id: d?.dorm_id || d?.dorm_code || d?.id,
             dorm_id: d?.dorm_id,
             dorm_code: d?.dorm_code,
-            name: d?.dorm_name_th || d?.dorm_name_en || "-",
+            name: pickDormName(d),
             address: d?.address_th || "",
             zone: inferZoneFromAddress(d?.address_th || ""),
             distance_m: d?.distance_m ?? null,
@@ -215,7 +227,8 @@ export default function Home() {
     return () => {
       alive = false;
     };
-  }, [API_BASE]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [API_BASE, i18n.language]);
 
   const zones = useMemo(() => {
     const order = ["Chalongkrung 1", "FBT", "Nikom", "Jinda"];
@@ -230,9 +243,7 @@ export default function Home() {
 
   const heroStudentsLiving = useMemo(() => {
     if (!heroDorm) return null;
-    // ถ้ามี total/available คำนวณได้ -> ใช้เลย
     if (Number.isFinite(Number(heroDorm.students_living))) return Number(heroDorm.students_living);
-    // fallback: ถ้ามี total_rooms อย่างเดียว ก็โชว์ total_rooms แทน (ยังดีกว่า 0)
     if (Number.isFinite(Number(heroDorm.total_rooms))) return Number(heroDorm.total_rooms);
     return null;
   }, [heroDorm]);
@@ -240,61 +251,67 @@ export default function Home() {
   const stats = useMemo(() => {
     const totalDormitoryNum = Number.isFinite(totalDorms) ? totalDorms : dorms.length;
     const totalRooms = dorms.reduce((s, d) => s + (Number(d.total_rooms) || 0), 0);
-    const totalCapacity = "-"; // ยังไม่มี field capacity
 
     return [
       {
-        num: totalDormitoryNum ? totalDormitoryNum.toLocaleString("th-TH") : "-",
-        label: "Total Dormitory",
+        num: totalDormitoryNum ? totalDormitoryNum.toLocaleString(numberLocale) : "-",
+        label: t("home.stats.totalDormitory"),
       },
-      { num: totalCapacity, label: "Total Capacity" },
-      { num: totalRooms ? totalRooms.toLocaleString("th-TH") : "-", label: "Total Rooms" },
+      { num: "-", label: t("home.stats.totalCapacity") },
+      { num: totalRooms ? totalRooms.toLocaleString(numberLocale) : "-", label: t("home.stats.totalRooms") },
     ];
-  }, [dorms, totalDorms]);
+  }, [dorms, totalDorms, numberLocale, t]);
 
   // ✅ ปุ่ม category จะส่ง query ไปให้ Search.jsx อ่าน
-  const categories = [
-    {
-      title: "Location",
-      subtitle: "Find follow location from KMITL",
-      icon: <MapPin size={26} color="white" />,
-      pills: [
-        { label: "Radius 500 m", params: { distanceMax: 500 } },
-        { label: "Radius 1 km", params: { distanceMax: 1000 } },
-        { label: "Radius 2 km", params: { distanceMax: 2000 } },
-      ],
-    },
-    {
-      title: "Prices",
-      subtitle: "Select the right price",
-      icon: <BadgeDollarSign size={26} color="white" />,
-      pills: [
-        { label: "2800 - 3500", params: { priceMin: 2800, priceMax: 3500 } },
-        { label: "4000 - 5500", params: { priceMin: 4000, priceMax: 5500 } },
-        { label: "6000 up", params: { priceMin: 6000 } },
-      ],
-    },
-    {
-      title: "Facilities",
-      subtitle: "Find follow facilities",
-      icon: <ShieldCheck size={26} color="white" />,
-      pills: [
-        { label: "Pet Friendly", params: { petFriendly: 1 } },
-        { label: "Key card", params: { amenities: "key card" } },
-        { label: "Gym", params: { amenities: "gym" } },
-      ],
-    },
-    {
-      title: "Dormitory Type",
-      subtitle: "Find follow dorm type",
-      icon: <Users size={26} color="white" />,
-      pills: [
-        { label: "Only Male", params: { dormitoryType: "male" } },
-        { label: "Only Females", params: { dormitoryType: "female" } },
-        { label: "Co-Ed", params: { dormitoryType: "mix" } },
-      ],
-    },
-  ];
+  const categories = useMemo(
+    () => [
+      {
+        key: "location",
+        title: t("home.category.location.title"),
+        subtitle: t("home.category.location.subtitle"),
+        icon: <MapPin size={26} color="white" />,
+        pills: [
+          { label: t("home.category.location.r500"), params: { distanceMax: 500 } },
+          { label: t("home.category.location.r1k"), params: { distanceMax: 1000 } },
+          { label: t("home.category.location.r2k"), params: { distanceMax: 2000 } },
+        ],
+      },
+      {
+        key: "prices",
+        title: t("home.category.prices.title"),
+        subtitle: t("home.category.prices.subtitle"),
+        icon: <BadgeDollarSign size={26} color="white" />,
+        pills: [
+          { label: t("home.category.prices.p1"), params: { priceMin: 2800, priceMax: 3500 }, isMoney: true },
+          { label: t("home.category.prices.p2"), params: { priceMin: 4000, priceMax: 5500 }, isMoney: true },
+          { label: t("home.category.prices.p3"), params: { priceMin: 6000 }, isMoney: true },
+        ],
+      },
+      {
+        key: "facilities",
+        title: t("home.category.facilities.title"),
+        subtitle: t("home.category.facilities.subtitle"),
+        icon: <ShieldCheck size={26} color="white" />,
+        pills: [
+          { label: t("home.category.facilities.pet"), params: { petFriendly: 1 } },
+          { label: t("home.category.facilities.keycard"), params: { amenities: "key card" } },
+          { label: t("home.category.facilities.gym"), params: { amenities: "gym" } },
+        ],
+      },
+      {
+        key: "type",
+        title: t("home.category.type.title"),
+        subtitle: t("home.category.type.subtitle"),
+        icon: <Users size={26} color="white" />,
+        pills: [
+          { label: t("home.category.type.male"), params: { dormitoryType: "male" } },
+          { label: t("home.category.type.female"), params: { dormitoryType: "female" } },
+          { label: t("home.category.type.mix"), params: { dormitoryType: "mix" } },
+        ],
+      },
+    ],
+    [t]
+  );
 
   return (
     <div className="w-full bg-white">
@@ -307,29 +324,24 @@ export default function Home() {
                 className="inline-flex items-center justify-center px-5 py-2 mb-6 text-sm font-bold text-white rounded-[10px]"
                 style={{ background: PRIMARY, boxShadow: "0px 4px 4px #FFE0B2" }}
               >
-                Find Your Dormitory Away From Home
+                {t("home.hero.badge")}
               </span>
 
               <h1 className="font-bold leading-[64px] mb-6" style={{ color: PRIMARY, fontSize: 48 }}>
-                Discover Your <br />
-                Perfect KMITL <br />
-                Dormitory
+                {t("home.hero.title1")}
+                <br />
+                {t("home.hero.title2")}
+                <br />
+                {t("home.hero.title3")}
               </h1>
 
-              <p
-                className="max-w-[539px] mb-6 text-[14px] leading-[25px] text-justify"
-                style={{ color: PRIMARY }}
-              >
-                Search through dormitories around KMITL with detailed information, photos, and
-                availability. Find the perfect place to call home during your studies.
+              <p className="max-w-[539px] mb-6 text-[14px] leading-[25px] text-justify" style={{ color: PRIMARY }}>
+                {t("home.hero.desc")}
               </p>
 
-              {/* ค้นหาได้เลย */}
+              {/* Search */}
               <div className="mt-4 max-w-[540px]">
-                <div
-                  className="flex items-center gap-3 rounded-[12px] px-4 py-3"
-                  style={{ border: `1px solid ${PRIMARY}` }}
-                >
+                <div className="flex items-center gap-3 rounded-[12px] px-4 py-3" style={{ border: `1px solid ${PRIMARY}` }}>
                   <SearchIcon size={18} color={PRIMARY} />
                   <input
                     value={q}
@@ -337,7 +349,7 @@ export default function Home() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") goSearch(q ? { q } : {});
                     }}
-                    placeholder="พิมพ์ชื่อหอ / โซน…"
+                    placeholder={t("home.searchPlaceholder")}
                     className="w-full outline-none text-[14px]"
                     style={{ color: PRIMARY }}
                   />
@@ -346,7 +358,7 @@ export default function Home() {
                     style={{ background: PRIMARY }}
                     onClick={() => goSearch(q ? { q } : {})}
                   >
-                    Search
+                    {t("home.searchButton")}
                   </button>
                 </div>
               </div>
@@ -356,13 +368,12 @@ export default function Home() {
             <div className="relative w-fit mx-auto">
               <DriveImg
                 url={heroDorm?.cover_image_url}
-                alt={heroDorm?.name || "Dormitory"}
+                alt={heroDorm?.name || t("home.dorm.alt")}
                 className="w-[420px] h-[465px] object-cover rounded-[20px]"
                 style={{ cursor: heroDorm ? "pointer" : "default" }}
                 onClick={() => heroDorm && goDormDetail(heroDorm)}
               />
 
-              {/* overlay click area */}
               <button
                 type="button"
                 onClick={() => heroDorm && goDormDetail(heroDorm)}
@@ -371,10 +382,7 @@ export default function Home() {
                 aria-label="open-hero-dorm"
               />
 
-              <div
-                className="absolute right-[-14px] top-[-14px] rounded-[10px] px-4 py-3 text-white"
-                style={{ background: PRIMARY }}
-              >
+              <div className="absolute right-[-14px] top-[-14px] rounded-[10px] px-4 py-3 text-white" style={{ background: PRIMARY }}>
                 <div className="flex items-center gap-4">
                   <div className="w-[35px] h-[35px] rounded-full border border-white flex items-center justify-center">
                     <Star size={18} color="white" />
@@ -382,16 +390,13 @@ export default function Home() {
                   <div className="leading-tight">
                     <div className="flex items-center gap-1">
                       <Star size={14} color="white" />
-                      <p className="font-bold text-[14px]">
-                        {heroDorm ? heroDorm.avg_rating.toFixed(1) : "-"}
-                      </p>
+                      <p className="font-bold text-[14px]">{heroDorm ? heroDorm.avg_rating.toFixed(1) : "-"}</p>
                     </div>
-                    <p className="font-bold text-[12px]">Average Rating</p>
+                    <p className="font-bold text-[12px]">{t("home.hero.avgRating")}</p>
                   </div>
                 </div>
               </div>
 
-              {/* ✅ แก้เป็น Students Living on Dormitory */}
               <div
                 className="absolute left-[-14px] bottom-[-14px] rounded-[10px] px-4 py-3 text-white flex items-center gap-3"
                 style={{ background: PRIMARY }}
@@ -400,8 +405,10 @@ export default function Home() {
                   <Users size={18} color="white" />
                 </div>
                 <p className="font-bold text-[12px] leading-[19px]">
-                  {Number.isFinite(heroStudentsLiving) ? heroStudentsLiving.toLocaleString("th-TH") : "-"} Students Living
-                  <br /> on Dormitory
+                  {Number.isFinite(heroStudentsLiving) ? heroStudentsLiving.toLocaleString(numberLocale) : "-"}{" "}
+                  {t("home.hero.studentsLivingLine1")}
+                  <br />
+                  {t("home.hero.studentsLivingLine2")}
                 </p>
               </div>
             </div>
@@ -436,7 +443,7 @@ export default function Home() {
           {loadingDorms && (
             <div className="rounded-[20px] p-6" style={{ border: `1px dashed ${PRIMARY}` }}>
               <p style={{ color: PRIMARY }} className="font-bold">
-                กำลังโหลดข้อมูลหอพัก…
+                {t("home.loadingDorms")}
               </p>
             </div>
           )}
@@ -444,10 +451,10 @@ export default function Home() {
           {!loadingDorms && dorms.length === 0 && (
             <div className="rounded-[20px] p-6" style={{ border: `1px dashed ${PRIMARY}` }}>
               <p style={{ color: PRIMARY }} className="font-bold">
-                ยังไม่พบข้อมูลหอพักจาก API
+                {t("home.noDorms")}
               </p>
               <p style={{ color: PRIMARY }} className="text-[14px] mt-1">
-                เช็คว่า endpoint /api/dorm/search ส่ง dorms[] กลับมาหรือไม่
+                {t("home.noDormsHint")}
               </p>
             </div>
           )}
@@ -468,7 +475,7 @@ export default function Home() {
                     style={{ color: PRIMARY }}
                     onClick={() => goSearch({ zone })}
                   >
-                    All <ChevronRight size={20} color={PRIMARY} />
+                    {t("home.all")} <ChevronRight size={20} color={PRIMARY} />
                   </button>
                 </div>
 
@@ -481,16 +488,12 @@ export default function Home() {
                       onClick={() => goDormDetail(d)}
                     >
                       <div className="relative h-[200px] w-full">
-                        <DriveImg
-                          url={d.cover_image_url}
-                          alt={d.name}
-                          className="h-full w-full object-cover"
-                        />
+                        <DriveImg url={d.cover_image_url} alt={d.name} className="h-full w-full object-cover" />
 
                         {d.verified && (
                           <span className="absolute left-4 top-4 inline-flex items-center gap-2 px-3 py-1 rounded-[10px] bg-[#42BD41] text-white text-[14px] leading-[19px]">
                             <BadgeCheck size={18} color="white" />
-                            verify
+                            {t("home.verified")}
                           </span>
                         )}
                       </div>
@@ -503,25 +506,25 @@ export default function Home() {
                         <div className="mt-3 flex items-center gap-2">
                           <MapPin size={16} color={PRIMARY} />
                           <p className="text-[16px] leading-[21px]" style={{ color: PRIMARY }}>
-                            distance {formatDistanceM(d.distance_m)} from KMITL
+                            {t("home.distanceFromKmitl", {
+                              value: formatDistanceM(d.distance_m, t),
+                            })}
                           </p>
                         </div>
 
                         <div className="mt-5 flex items-center justify-between">
-                          <div
-                            className="flex items-center gap-2 text-[14px] font-bold leading-[19px]"
-                            style={{ color: PRIMARY }}
-                          >
+                          <div className="flex items-center gap-2 text-[14px] font-bold leading-[19px]" style={{ color: PRIMARY }}>
                             <Star size={16} color={PRIMARY} />
-                            {d.avg_rating.toFixed(1)} ({d.review_count} Review)
+                            {d.avg_rating.toFixed(1)}{" "}
+                            {t("home.reviewCount", { value: d.review_count })}
                           </div>
 
-                          <div
-                            className="flex items-center gap-2 text-[12px] font-bold leading-[19px]"
-                            style={{ color: PRIMARY }}
-                          >
+                          <div className="flex items-center gap-2 text-[12px] font-bold leading-[19px]" style={{ color: PRIMARY }}>
                             <BadgeDollarSign size={16} color={PRIMARY} />
-                            {formatMoney(d.price_min)} - {formatMoney(d.price_max)} / Month
+                            {t("home.priceRangePerMonth", {
+                              min: formatMoney(d.price_min, numberLocale),
+                              max: formatMoney(d.price_max, numberLocale),
+                            })}
                           </div>
                         </div>
                       </div>
@@ -529,12 +532,9 @@ export default function Home() {
                   ))}
 
                   {!loadingDorms && inZone.length === 0 && (
-                    <div
-                      className="col-span-1 md:col-span-3 rounded-[20px] p-6"
-                      style={{ border: `1px dashed ${PRIMARY}` }}
-                    >
+                    <div className="col-span-1 md:col-span-3 rounded-[20px] p-6" style={{ border: `1px dashed ${PRIMARY}` }}>
                       <p style={{ color: PRIMARY }} className="font-bold">
-                        โซน {zone} ยังไม่มีข้อมูล
+                        {t("home.zoneNoData", { zone })}
                       </p>
                     </div>
                   )}
@@ -549,7 +549,7 @@ export default function Home() {
               style={{ background: PRIMARY }}
               onClick={() => goSearch()}
             >
-              See all Dormitories
+              {t("home.seeAllDorms")}
             </button>
           </div>
         </div>
@@ -560,22 +560,14 @@ export default function Home() {
         <div className="mx-auto w-full max-w-[1296px] px-[72px] py-[50px]">
           <div className="flex flex-col items-center gap-[42px]">
             <div className="text-center">
-              <h2 className="text-white font-bold text-[30px] leading-[40px]">Find follow category</h2>
-              <p className="text-white text-[20px] leading-[32px] mt-2">
-                Choose the search channel that best suits your needs
-              </p>
+              <h2 className="text-white font-bold text-[30px] leading-[40px]">{t("home.categoryTitle")}</h2>
+              <p className="text-white text-[20px] leading-[32px] mt-2">{t("home.categorySubtitle")}</p>
             </div>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-8">
               {categories.map((c) => (
-                <div
-                  key={c.title}
-                  className="w-full h-[400px] rounded-[30px] bg-white px-5 py-6 flex flex-col items-center"
-                >
-                  <div
-                    className="w-[65px] h-[65px] rounded-full flex items-center justify-center"
-                    style={{ background: PRIMARY }}
-                  >
+                <div key={c.key} className="w-full h-[400px] rounded-[30px] bg-white px-5 py-6 flex flex-col items-center">
+                  <div className="w-[65px] h-[65px] rounded-full flex items-center justify-center" style={{ background: PRIMARY }}>
                     {c.icon}
                   </div>
 
@@ -592,7 +584,7 @@ export default function Home() {
                         style={{ background: PRIMARY }}
                         onClick={() => goSearch(p.params)}
                       >
-                        {c.title === "Prices" ? <span>฿ {p.label}</span> : <span>{p.label}</span>}
+                        {p.isMoney ? <span>{t("home.bahtPrefix", { value: p.label })}</span> : <span>{p.label}</span>}
                       </button>
                     ))}
                   </div>
@@ -608,20 +600,15 @@ export default function Home() {
         <div className="mx-auto w-full max-w-[1204px] px-[72px] py-[50px] mt-20">
           <div className="flex flex-col items-center gap-12">
             <div className="text-center">
-              <h2 className="text-white font-bold text-[32px] leading-[42px]">Review</h2>
-              <p className="text-white text-[20px] leading-[32px] mt-2">
-                Experience from student who find dormitory with us
-              </p>
+              <h2 className="text-white font-bold text-[32px] leading-[42px]">{t("home.reviewTitle")}</h2>
+              <p className="text-white text-[20px] leading-[32px] mt-2">{t("home.reviewSubtitle")}</p>
             </div>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
               {!reviews.length && (
                 <div className="col-span-1 md:col-span-3 rounded-[30px] bg-white px-[28px] py-6">
-                  <p className="text-black font-bold text-[16px]">ตอนนี้ยังไม่มีรีวิวจริง ๆ ในระบบ</p>
-                  <p className="text-black text-[14px] mt-2">
-                    ถ้าคุณเพิ่ม endpoint รีวิว (เช่น /api/reviews หรือ /api/dorm/:id/reviews)
-                    เดี๋ยวผมเชื่อมให้ดึงข้อมูลจริงได้เลย
-                  </p>
+                  <p className="text-black font-bold text-[16px]">{t("home.noReviews")}</p>
+                  <p className="text-black text-[14px] mt-2">{t("home.noReviewsHint")}</p>
                 </div>
               )}
             </div>

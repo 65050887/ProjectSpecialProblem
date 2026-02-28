@@ -5,11 +5,9 @@ import MainNav from '../components/MainNav'
 
 const Layout = () => {
   return (
-    <div>
+    <div className='min-h-screen bg-white'>
       <MainNav />
-      <main>
         <Outlet />
-      </main>
     </div>
   )
 }
