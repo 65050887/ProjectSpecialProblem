@@ -90,7 +90,6 @@ function ReviewCard({ r }) {
   const createdAt = pickAny(r, ["created_at", "createdAt", "date"]);
   const rating = Number(pickAny(r, ["rating", "stars", "score"])) || 0;
 
-  // verify: ถ้ายังไม่มี field จริง จะไม่โชว์ (ไม่เดา)
   const verifiedRaw = pickAny(r, ["user.verified", "verified", "is_verified"]);
   const verified =
     verifiedRaw === true ||
@@ -100,7 +99,6 @@ function ReviewCard({ r }) {
 
   const comment = pickAny(r, ["comment", "content", "text"]) || "-";
 
-  // ถ้ายังไม่มี pros/cons จริง ก็จะเป็น —
   const prosRaw = pickAny(r, ["advantages", "pros"]);
   const consRaw = pickAny(r, ["disadvantages", "cons"]);
   const pros = Array.isArray(prosRaw)
@@ -193,7 +191,6 @@ function getTokenSmart() {
     const raw = localStorage.getItem("ecom-storage");
     if (!raw) return "";
     const obj = JSON.parse(raw);
-    // redux-persist มักจะเป็น string ซ้อนใน state
     const stateRaw = obj?.state ? (typeof obj.state === "string" ? JSON.parse(obj.state) : obj.state) : obj;
     return stateRaw?.user?.token || stateRaw?.token || "";
   } catch {
@@ -203,9 +200,11 @@ function getTokenSmart() {
 
 export default function ReviewPanel({
   dormId,
-  apiBase, // เช่น "http://localhost:5000/api"
+  apiBase,
   pageSize = 2,
-  onCountChange, // optional: ส่งจำนวนรีวิวกลับไปอัปเดต badge ที่แท็บ
+  onCountChange,
+  onLoginRequired,
+  isLoggedIn, // ✅ เพิ่ม: ถ้าไม่ login แล้วกด Write Review ให้เรียกอันนี้
 }) {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
@@ -246,10 +245,8 @@ export default function ReviewPanel({
         reviews: json?.reviews || [],
       });
 
-      // reset page
       setPage(1);
 
-      // ส่ง count กลับไปให้ parent ถ้าต้องการ
       if (typeof onCountChange === "function") {
         onCountChange(Number(json?.summary?.review_count ?? (json?.reviews || []).length ?? 0));
       }
@@ -293,7 +290,6 @@ export default function ReviewPanel({
         throw new Error(json?.message || "Create review failed");
       }
 
-      // success: ปิด modal แล้ว refresh list
       setWriteOpen(false);
       await fetchReviews();
     } catch (e) {
@@ -301,6 +297,24 @@ export default function ReviewPanel({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // ✅ กด Write Review: ถ้าไม่ login ให้เรียก onLoginRequired (ไม่เปิด modal)
+  const handleOpenWrite = () => {
+    // ✅ ถ้า parent บอกว่ายังไม่ล็อกอิน => เด้งไป login ทันที
+    if (isLoggedIn === false) {
+      if (typeof onLoginRequired === "function") onLoginRequired();
+      return;
+    }
+
+    // fallback กรณีไม่ได้ส่ง isLoggedIn มา (กันพัง)
+    const token = getTokenSmart();
+    if (!token) {
+      if (typeof onLoginRequired === "function") onLoginRequired();
+      return;
+    }
+
+    setWriteOpen(true);
   };
 
   return (
@@ -349,7 +363,7 @@ export default function ReviewPanel({
 
           <button
             type="button"
-            onClick={() => setWriteOpen(true)}
+            onClick={handleOpenWrite}
             className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[12px] font-extrabold text-[#F16323] hover:opacity-95"
           >
             <Star className="h-4 w-4 fill-[#F16323] text-[#F16323]" />
