@@ -51,11 +51,29 @@ function inferZoneFromAddress(addr = "") {
 }
 
 function pickRandom(arr, n) {
+  // ✅ ทำให้ผลลัพธ์ "คงที่" ไม่สลับเมื่อรีเฟรช
+  // เลือกโดยเรียงตาม distance_m ใกล้ก่อน แล้วค่อย tie-break ด้วย id/ชื่อ
   const a = Array.isArray(arr) ? [...arr] : [];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+
+  a.sort((x, y) => {
+    const dx = Number(x?.distance_m ?? x?.raw?.distance_m);
+    const dy = Number(y?.distance_m ?? y?.raw?.distance_m);
+
+    const ax = Number.isFinite(dx) ? dx : Number.POSITIVE_INFINITY;
+    const ay = Number.isFinite(dy) ? dy : Number.POSITIVE_INFINITY;
+
+    if (ax !== ay) return ax - ay;
+
+    const ix = Number(x?.id ?? x?.dorm_id ?? x?.raw?.dorm_id ?? 0);
+    const iy = Number(y?.id ?? y?.dorm_id ?? y?.raw?.dorm_id ?? 0);
+
+    if (ix !== iy) return ix - iy;
+
+    const nx = String(x?.name ?? x?.raw?.dorm_name_th ?? x?.raw?.dorm_name_en ?? "");
+    const ny = String(y?.name ?? y?.raw?.dorm_name_th ?? y?.raw?.dorm_name_en ?? "");
+    return nx.localeCompare(ny, "th", { sensitivity: "base" });
+  });
+
   return a.slice(0, n);
 }
 
@@ -238,7 +256,7 @@ export default function Home() {
 
   const heroDorm = useMemo(() => {
     if (!dorms?.length) return null;
-    return dorms[Math.floor(Math.random() * dorms.length)];
+    return pickRandom(dorms, 1)[0] || null; // ✅ ตอนนี้คงที่แล้ว
   }, [dorms]);
 
   const heroStudentsLiving = useMemo(() => {

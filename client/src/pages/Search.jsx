@@ -697,7 +697,7 @@ export default function Search() {
         const params = new URLSearchParams();
         if (q.trim()) params.set("q", q.trim());
         params.set("page", "1");
-        params.set("limit", "50");
+        params.set("limit", "200");
 
         const url = `${API}/dorm/search?${params.toString()}`;
         const resp = await fetch(url, { signal: controller.signal });

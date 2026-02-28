@@ -110,7 +110,7 @@ exports.searchDorms = async (req, res) => {
     const tokens = qRaw.split(/\s+/).filter(Boolean);
 
     const page = Math.max(Number(req.query.page || 1), 1);
-    const limit = Math.min(Math.max(Number(req.query.limit || 20), 1), 50);
+    const limit = Math.min(Math.max(Number(req.query.limit || 20), 1), 200);
     const skip = (page - 1) * limit;
 
     // ✅ ถ้าหนูจะ filter ราคาใน search: ใช้ price_min/price_max จาก dorms ได้เลย

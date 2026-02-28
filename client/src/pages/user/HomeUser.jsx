@@ -47,13 +47,30 @@ function inferZoneFromAddress(addr = "") {
   return "Chalongkrung 1";
 }
 function pickRandom(arr, n) {
+  // ✅ ทำให้ผลลัพธ์ "คงที่" ไม่สลับเมื่อรีเฟรช
+  // เลือกโดยเรียงตาม distance_m ใกล้ก่อน แล้ว tie-break ด้วย id/ชื่อ
   const a = Array.isArray(arr) ? [...arr] : [];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+
+  a.sort((x, y) => {
+    const dx = Number(x?.distance_m ?? x?.raw?.distance_m);
+    const dy = Number(y?.distance_m ?? y?.raw?.distance_m);
+
+    const ax = Number.isFinite(dx) ? dx : Number.POSITIVE_INFINITY;
+    const ay = Number.isFinite(dy) ? dy : Number.POSITIVE_INFINITY;
+    if (ax !== ay) return ax - ay;
+
+    const ix = Number(x?.id ?? x?.dorm_id ?? x?.raw?.dorm_id ?? 0);
+    const iy = Number(y?.id ?? y?.dorm_id ?? y?.raw?.dorm_id ?? 0);
+    if (ix !== iy) return ix - iy;
+
+    const nx = String(x?.name ?? x?.raw?.dorm_name_th ?? x?.raw?.dorm_name_en ?? "");
+    const ny = String(y?.name ?? y?.raw?.dorm_name_th ?? y?.raw?.dorm_name_en ?? "");
+    return nx.localeCompare(ny, "th", { sensitivity: "base" });
+  });
+
   return a.slice(0, n);
 }
+
 async function fetchJSON(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -208,7 +225,7 @@ export default function HomeUser() {
 
   const heroDorm = useMemo(() => {
     if (!dorms?.length) return null;
-    return dorms[Math.floor(Math.random() * dorms.length)];
+    return pickRandom(dorms, 1)[0] || null; // ✅ ตอนนี้นิ่งแล้ว
   }, [dorms]);
 
   const heroStudentsLiving = useMemo(() => {
@@ -504,8 +521,11 @@ export default function HomeUser() {
       </section>
 
       {/* CATEGORY */}
-      <section className="w-full" style={{ background: BLUE }}>
-        <div className="mx-auto w-full max-w-[1296px] px-[72px] py-[50px]">
+      <section 
+        className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]" 
+        style={{ background: BLUE }}
+      >
+        <div className="mx-auto w-full max-w-[1190px] px-6 py-[50px]">
           <div className="flex flex-col items-center gap-[42px]">
             <div className="text-center">
               <h2 className="text-white font-bold text-[30px] leading-[40px]">Find follow category</h2>
@@ -546,8 +566,11 @@ export default function HomeUser() {
       </section>
 
       {/* REVIEW */}
-      <section className="w-full" style={{ background: REVIEW_BG }}>
-        <div className="mx-auto w-full max-w-[1204px] px-[72px] py-[50px] mt-20">
+      <section 
+        className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]" 
+        style={{ background: REVIEW_BG }}
+      >
+        <div className="mx-auto w-full max-w-[1190px] px-6 py-[50px] mt-20">
           <div className="flex flex-col items-center gap-12">
             <div className="text-center">
               <h2 className="text-white font-bold text-[32px] leading-[42px]">Review</h2>
